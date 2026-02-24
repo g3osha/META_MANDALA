@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☸ META MANDALA — Glitch Spiritual Generator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☸</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="scanline-overlay"></div>
+<div id="app">
+
+  <header id="header">
+    <div class="header-ascii">
+<pre class="ascii-logo">
+╔══════════════════════════════════════════╗
+║   ☸  M E T A   M A N D A L A  ☸        ║
+║   ═══════════════════════════════        ║
+║   glitch · spiritual · generator         ║
+╚══════════════════════════════════════════╝
+</pre>
+    </div>
+    <div class="header-mantra" id="headerMantra">ॐ मणि पद्मे हूँ</div>
+  </header>
+
+  <main id="main">
+    <div class="workspace">
+
+      <aside class="panel panel-left" id="panelLeft">
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ TRADITION</h3>
+          <div class="tradition-grid">
+            <button class="tradition-btn active" data-tradition="vajrayana" title="Vajrayana">वज्र<br><span>Vajrayana</span></button>
+            <button class="tradition-btn" data-tradition="theravada" title="Theravada">थेर<br><span>Theravada</span></button>
+            <button class="tradition-btn" data-tradition="zen" title="Zen">禅<br><span>Zen</span></button>
+            <button class="tradition-btn" data-tradition="tibetan" title="Tibetan">བོད<br><span>Tibetan</span></button>
+            <button class="tradition-btn" data-tradition="shingon" title="Shingon">真言<br><span>Shingon</span></button>
+            <button class="tradition-btn" data-tradition="fractal" title="Fractal">◬<br><span>Fractal</span></button>
+            <button class="tradition-btn" data-tradition="custom" title="Custom">✦<br><span>Custom</span></button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ GEOMETRY</h3>
+          <div class="geo-controls">
+            <label class="control-row"><span class="label-text">Rings</span><input type="range" id="rings" min="1" max="12" value="6"><span class="val" id="ringsVal">6</span></label>
+            <label class="control-row"><span class="label-text">Petals</span><input type="range" id="petals" min="3" max="32" value="8"><span class="val" id="petalsVal">8</span></label>
+            <label class="control-row"><span class="label-text">Symmetry</span><input type="range" id="symmetry" min="1" max="24" value="8"><span class="val" id="symmetryVal">8</span></label>
+            <label class="control-row"><span class="label-text">Complexity</span><input type="range" id="complexity" min="1" max="10" value="5"><span class="val" id="complexityVal">5</span></label>
+            <label class="control-row"><span class="label-text">Scale</span><input type="range" id="scale" min="20" max="100" value="80"><span class="val" id="scaleVal">80</span></label>
+            <label class="control-row"><span class="label-text">Line W</span><input type="range" id="lineWidth" min="1" max="40" value="10"><span class="val" id="lineWidthVal">1.0</span></label>
+            <label class="control-row"><span class="label-text">Inner Rot</span><input type="range" id="innerRotation" min="0" max="90" value="0"><span class="val" id="innerRotationVal">0°</span></label>
+            <label class="control-row"><span class="label-text">Fractal</span><input type="range" id="fractalDepth" min="0" max="7" value="0"><span class="val" id="fractalDepthVal">0</span></label>
+          </div>
+          <div class="shape-toggles">
+            <button class="shape-btn active" data-shape="circle" title="Circle">○</button>
+            <button class="shape-btn active" data-shape="square" title="Square">□</button>
+            <button class="shape-btn" data-shape="triangle" title="Triangle">△</button>
+            <button class="shape-btn" data-shape="lotus" title="Lotus">✿</button>
+            <button class="shape-btn" data-shape="diamond" title="Diamond">◇</button>
+            <button class="shape-btn" data-shape="star" title="Star">✦</button>
+          </div>
+          <div class="toggle-row" style="margin-top:8px">
+            <label class="toggle-label"><input type="checkbox" id="strokeOnly"> <span>Stroke only</span></label>
+            <label class="toggle-label"><input type="checkbox" id="filledMode"> <span>Filled</span></label>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ CUSTOM TEXT</h3>
+          <input type="text" id="customTextInput" class="input-dark" placeholder="Your text on mandala...">
+          <label class="control-row"><span class="label-text">Size</span><input type="range" id="customTextSize" min="6" max="40" value="12"><span class="val" id="customTextSizeVal">12</span></label>
+          <label class="control-row"><span class="label-text">Ring</span><input type="range" id="customTextRing" min="1" max="10" value="5"><span class="val" id="customTextRingVal">5</span></label>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ SACRED OBJECTS</h3>
+          <label class="control-row"><span class="label-text">Object</span>
+            <select id="objectType" class="select-dark select-sm">
+              <option value="none">None</option>
+              <option value="buddha">Buddha</option>
+              <option value="eye">Third Eye</option>
+              <option value="dharmachakra">Dharma Wheel</option>
+              <option value="deer">Deer</option>
+              <option value="elephant">Elephant</option>
+              <option value="stupa">Stupa</option>
+              <option value="vajra">Vajra</option>
+              <option value="tree">Bodhi Tree</option>
+              <option value="moon">Moon</option>
+              <option value="om">Om ॐ</option>
+            </select>
+          </label>
+          <label class="control-row"><span class="label-text">Size</span><input type="range" id="objectSize" min="5" max="80" value="25"><span class="val" id="objectSizeVal">25</span></label>
+          <label class="control-row"><span class="label-text">Count</span><input type="range" id="objectCount" min="1" max="12" value="1"><span class="val" id="objectCountVal">1</span></label>
+          <label class="control-row"><span class="label-text">Ring</span><input type="range" id="objectRing" min="0" max="10" value="0"><span class="val" id="objectRingVal">0</span></label>
+          <label class="control-row"><span class="label-text">Opacity</span><input type="range" id="objectOpacity" min="0" max="100" value="80"><span class="val" id="objectOpacityVal">80</span></label>
+          <label class="control-row"><span class="label-text">Style</span>
+            <select id="objectStyle" class="select-dark select-sm">
+              <option value="stroke">Stroke</option>
+              <option value="fill">Fill</option>
+              <option value="glow">Glow</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ MANTRA</h3>
+          <select id="mantraSelect" class="select-dark">
+            <option value="om_mani">ॐ मणि पद्मे हूँ</option>
+            <option value="gate_gate">गते गते पारगते</option>
+            <option value="om_tare">ॐ तारे तुत्तारे</option>
+            <option value="tayata">तद्यथा ॐ बेकन्द्ज़े</option>
+            <option value="nam_myoho">南無妙法蓮華經</option>
+            <option value="om_ah_hum">ॐ आः हूँ वज्र गुरु</option>
+            <option value="custom_mantra">✎ Custom...</option>
+          </select>
+          <input type="text" id="customMantra" class="input-dark hidden" placeholder="Enter your mantra...">
+          <label class="control-row"><span class="label-text">Encoding</span>
+            <select id="mantraEncoding" class="select-dark select-sm">
+              <option value="spiral">Spiral</option><option value="radial">Radial</option>
+              <option value="hidden">Hidden</option><option value="glitch">Glitch</option>
+            </select>
+          </label>
+          <label class="control-row"><span class="label-text">Opacity</span><input type="range" id="mantraOpacity" min="0" max="100" value="40"><span class="val" id="mantraOpacityVal">40</span></label>
+        </section>
+
+      </aside>
+
+      <div class="canvas-area">
+        <div class="canvas-frame" id="canvasFrame">
+          <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+          <canvas id="glitchCanvas" width="800" height="800"></canvas>
+          <pre class="ascii-overlay hidden" id="asciiOverlay"></pre>
+          <button class="fullscreen-btn" id="btnFullscreen" title="Fullscreen [F]">⛶</button>
+          <div class="canvas-corner tl">╔</div>
+          <div class="canvas-corner tr">╗</div>
+          <div class="canvas-corner bl">╚</div>
+          <div class="canvas-corner br">╝</div>
+        </div>
+        <div class="canvas-actions">
+          <button class="action-btn" id="btnGenerate" title="[G]">☸ GENERATE</button>
+          <button class="action-btn" id="btnAnimate" title="[Space]">◎ ANIMATE</button>
+          <button class="action-btn" id="btnFlyInto" title="Fly into mandala">⊛ FLY INTO</button>
+          <button class="action-btn" id="btnExport" title="[E]">⬡ EXPORT</button>
+          <button class="action-btn" id="btnExportGif" title="GIF/Video">⟐ GIF</button>
+          <button class="action-btn" id="btnAscii" title="ASCII mode [A]">▣ ASCII</button>
+          <button class="action-btn" id="btnRandom" title="[R]">⚡ RANDOM</button>
+        </div>
+      </div>
+
+      <aside class="panel panel-right" id="panelRight">
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ GLITCH</h3>
+          <label class="control-row"><span class="label-text">RGB Shift</span><input type="range" id="rgbShift" min="0" max="30" value="0"><span class="val" id="rgbShiftVal">0</span></label>
+          <label class="control-row"><span class="label-text">Noise</span><input type="range" id="noise" min="0" max="100" value="0"><span class="val" id="noiseVal">0</span></label>
+          <label class="control-row"><span class="label-text">Scanlines</span><input type="range" id="scanlines" min="0" max="100" value="20"><span class="val" id="scanlinesVal">20</span></label>
+          <label class="control-row"><span class="label-text">Distortion</span><input type="range" id="distortion" min="0" max="50" value="0"><span class="val" id="distortionVal">0</span></label>
+          <label class="control-row"><span class="label-text">Pixelate</span><input type="range" id="pixelate" min="1" max="20" value="1"><span class="val" id="pixelateVal">1</span></label>
+          <label class="control-row"><span class="label-text">Flicker</span><input type="range" id="flicker" min="0" max="100" value="0"><span class="val" id="flickerVal">0</span></label>
+          <button class="action-btn small" id="btnGlitchPreset">⚡ GLITCH BURST</button>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ COLOR</h3>
+          <div class="color-presets">
+            <button class="color-preset active" data-palette="samsara" style="background:linear-gradient(135deg,#1a0a2e,#6b2fa0,#e6a800)" title="Samsara">◐</button>
+            <button class="color-preset" data-palette="void" style="background:linear-gradient(135deg,#000,#1a1a2e,#333)" title="Void">◐</button>
+            <button class="color-preset" data-palette="lotus" style="background:linear-gradient(135deg,#ff6b9d,#c44569,#f8b500)" title="Lotus">◐</button>
+            <button class="color-preset" data-palette="dharma" style="background:linear-gradient(135deg,#00b894,#006266,#f6e58d)" title="Dharma">◐</button>
+            <button class="color-preset" data-palette="fire" style="background:linear-gradient(135deg,#eb4d4b,#f0932b,#f9ca24)" title="Fire">◐</button>
+            <button class="color-preset" data-palette="ice" style="background:linear-gradient(135deg,#a29bfe,#74b9ff,#dfe6e9)" title="Ice">◐</button>
+          </div>
+          <label class="control-row"><span class="label-text">Hue Rot</span><input type="range" id="hueRotate" min="0" max="360" value="0"><span class="val" id="hueRotateVal">0°</span></label>
+          <label class="control-row"><span class="label-text">Saturate</span><input type="range" id="saturation" min="0" max="200" value="100"><span class="val" id="saturationVal">100</span></label>
+          <label class="control-row"><span class="label-text">Bright</span><input type="range" id="brightness" min="20" max="200" value="100"><span class="val" id="brightnessVal">100</span></label>
+          <label class="control-row"><span class="label-text">Contrast</span><input type="range" id="contrast" min="50" max="200" value="100"><span class="val" id="contrastVal">100</span></label>
+          <label class="control-row"><span class="label-text">Invert</span><input type="range" id="invert" min="0" max="100" value="0"><span class="val" id="invertVal">0</span></label>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ CUSTOM GRADIENT</h3>
+          <div class="toggle-row" style="margin-bottom:8px">
+            <label class="toggle-label"><input type="checkbox" id="gradientEnabled"> <span>Enable gradient</span></label>
+          </div>
+          <div class="gradient-controls" id="gradientControls">
+            <div class="color-row">
+              <input type="color" id="gradColor1" value="#6b2fa0" class="color-input">
+              <input type="color" id="gradColor2" value="#e6a800" class="color-input">
+              <input type="color" id="gradColor3" value="#ff6b9d" class="color-input">
+            </div>
+            <label class="control-row"><span class="label-text">BG Type</span>
+              <select id="gradBgType" class="select-dark select-sm">
+                <option value="flat">Flat</option>
+                <option value="radial" selected>Radial</option>
+                <option value="linear">Linear</option>
+                <option value="conic">Conic</option>
+              </select>
+            </label>
+            <label class="control-row"><span class="label-text">BG Color</span>
+              <input type="color" id="gradBgColor" value="#0a0a1a" class="color-input" style="flex:1">
+            </label>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">◈ IMAGE</h3>
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">⬡</div>
+            <div class="upload-text">Drop image or click</div>
+            <input type="file" id="imageUpload" accept="image/*" hidden>
+          </div>
+          <div class="image-controls hidden" id="imageControls">
+            <label class="control-row"><span class="label-text">Blend</span>
+              <select id="imageBlend" class="select-dark select-sm">
+                <option value="source-over">Normal</option><option value="multiply">Multiply</option>
+                <option value="screen">Screen</option><option value="overlay">Overlay</option>
+                <option value="difference">Difference</option><option value="exclusion">Exclusion</option>
+                <option value="luminosity">Luminosity</option><option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option><option value="color-dodge">Dodge</option>
+                <option value="color-burn">Burn</option>
+              </select>
+            </label>
+            <label class="control-row"><span class="label-text">Opacity</span><input type="range" id="imageOpacity" min="0" max="100" value="50"><span class="val" id="imageOpacityVal">50</span></label>
+            <label class="control-row"><span class="label-text">Fragments</span><input type="range" id="imageFragments" min="2" max="36" value="8"><span class="val" id="imageFragmentsVal">8</span></label>
+            <label class="control-row"><span class="label-text">Rotation</span><input type="range" id="imageRotation" min="0" max="360" value="0"><span class="val" id="imageRotationVal">0°</span></label>
+            <label class="control-row"><span class="label-text">Threshold</span><input type="range" id="imageThreshold" min="0" max="100" value="0"><span class="val" id="imageThresholdVal">0</span></label>
+            <label class="control-row"><span class="label-text">Mirror</span>
+              <select id="imageMirror" class="select-dark select-sm">
+                <option value="none">None</option><option value="alternate" selected>Alternate</option><option value="all">All</option>
+              </select>
+            </label>
+            <div class="toggle-row">
+              <label class="toggle-label"><input type="checkbox" id="imageKaleidoscope"> <span>Kaleidoscope</span></label>
+              <label class="toggle-label"><input type="checkbox" id="imageEdgeDetect"> <span>Edges</span></label>
+            </div>
+            <button class="action-btn small" id="btnClearImage">✕ CLEAR</button>
+          </div>
+        </section>
+
+      </aside>
+    </div>
+  </main>
+
+  <footer id="footer">
+    <pre class="footer-ascii">
+───────────────────────────────────────────────────────
+ ☸ all phenomena are empty ☸ gate gate paragate bodhi svaha ☸
+───────────────────────────────────────────────────────
+    </pre>
+  </footer>
+
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay hidden" id="exportModal">
+  <div class="modal">
+    <h3 class="section-title" style="margin-bottom:16px">⬡ EXPORT PNG</h3>
+    <div class="export-options">
+      <button class="export-res-btn" data-w="800">800px</button>
+      <button class="export-res-btn" data-w="1024">1024px</button>
+      <button class="export-res-btn active" data-w="2048">2K</button>
+      <button class="export-res-btn" data-w="3840">4K</button>
+      <button class="export-res-btn" data-w="4096">4096px</button>
+    </div>
+    <div class="modal-actions">
+      <button class="action-btn" id="btnExportConfirm">⬡ DOWNLOAD</button>
+      <button class="action-btn" id="btnExportCancel">✕ CANCEL</button>
+    </div>
+    <div class="export-progress hidden" id="exportProgress">
+      <div class="progress-bar"><div class="progress-fill" id="exportProgressFill"></div></div>
+      <span class="progress-text" id="exportProgressText"></span>
+    </div>
+  </div>
+</div>
+
+<!-- GIF Modal -->
+<div class="modal-overlay hidden" id="gifModal">
+  <div class="modal">
+    <h3 class="section-title" style="margin-bottom:16px">⟐ EXPORT GIF / WEBM</h3>
+    <div class="gif-options">
+      <label class="control-row"><span class="label-text">Format</span>
+        <select id="gifFormat" class="select-dark select-sm"><option value="gif">GIF</option><option value="webm">WebM</option></select>
+      </label>
+      <label class="control-row"><span class="label-text">Size</span>
+        <select id="gifResolution" class="select-dark select-sm"><option value="400">400px</option><option value="600" selected>600px</option><option value="800">800px</option></select>
+      </label>
+      <label class="control-row"><span class="label-text">Duration</span>
+        <select id="gifDuration" class="select-dark select-sm"><option value="2">2s</option><option value="3" selected>3s</option><option value="5">5s</option><option value="8">8s</option></select>
+      </label>
+      <label class="control-row"><span class="label-text">FPS</span>
+        <select id="gifFps" class="select-dark select-sm"><option value="10">10</option><option value="15" selected>15</option><option value="20">20</option></select>
+      </label>
+      <label class="control-row"><span class="label-text">Speed</span><input type="range" id="gifSpeed" min="1" max="10" value="3"><span class="val" id="gifSpeedVal">3</span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="action-btn" id="btnGifConfirm">⟐ RENDER</button>
+      <button class="action-btn" id="btnGifCancel">✕ CANCEL</button>
+    </div>
+    <div class="export-progress hidden" id="gifProgress">
+      <div class="progress-bar"><div class="progress-fill" id="gifProgressFill"></div></div>
+      <span class="progress-text" id="gifProgressText"></span>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script src="glitch.js"></script>
+<script src="gif.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
