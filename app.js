@@ -465,12 +465,92 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'e': document.getElementById('btnExport').click(); break;
       case 'f': document.getElementById('btnFullscreen').click(); break;
       case 'a': document.getElementById('btnAscii').click(); break;
+      case 'p': document.getElementById('btnAutoPlay').click(); break;
       case ' ': e.preventDefault(); document.getElementById('btnAnimate').click(); break;
       case 'escape':
         document.getElementById('exportModal').classList.add('hidden');
         document.getElementById('gifModal').classList.add('hidden'); break;
     }
   });
+
+  // ═══ AUTO-PLAY (random mandalas on interval) ═══
+  let autoPlayInterval = null;
+  const btnAutoPlay = document.getElementById('btnAutoPlay');
+  btnAutoPlay.addEventListener('click', ()=>{
+    if (autoPlayInterval) { stopAutoPlay(); }
+    else { startAutoPlay(); }
+  });
+
+  function startAutoPlay() {
+    btnAutoPlay.classList.add('active');
+    btnAutoPlay.innerHTML = '▶ STOP';
+    triggerRandom();
+    autoPlayInterval = setInterval(triggerRandom, 3000);
+  }
+
+  function stopAutoPlay() {
+    clearInterval(autoPlayInterval);
+    autoPlayInterval = null;
+    btnAutoPlay.classList.remove('active');
+    btnAutoPlay.innerHTML = '▶ PLAY';
+  }
+
+  function triggerRandom() {
+    document.getElementById('btnRandom').click();
+  }
+
+  // ═══ RECORD (capture canvas as WebM video) ═══
+  let mediaRecorder = null, recordedChunks = [];
+  const btnRecord = document.getElementById('btnRecord');
+  btnRecord.addEventListener('click', ()=>{
+    if (mediaRecorder && mediaRecorder.state === 'recording') { stopRecording(); }
+    else { startRecording(); }
+  });
+
+  function startRecording() {
+    const stream = mandalaCanvas.captureStream(30);
+    const glitchStream = glitchCanvas.captureStream(30);
+    const combined = document.createElement('canvas');
+    combined.width = 800; combined.height = 800;
+    const cCtx = combined.getContext('2d');
+    const cStream = combined.captureStream(30);
+
+    function drawCombined() {
+      cCtx.drawImage(mandalaCanvas, 0, 0);
+      cCtx.drawImage(glitchCanvas, 0, 0);
+      if (mediaRecorder && mediaRecorder.state === 'recording')
+        requestAnimationFrame(drawCombined);
+    }
+
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(cStream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 8000000
+    });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const link = document.createElement('a');
+      link.download = `meta-mandala-${Date.now()}.webm`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    };
+
+    mediaRecorder.start();
+    drawCombined();
+    btnRecord.classList.add('active');
+    btnRecord.innerHTML = '⏺ STOP';
+    btnRecord.style.borderColor = '#eb4d4b';
+    btnRecord.style.color = '#eb4d4b';
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+    btnRecord.classList.remove('active');
+    btnRecord.innerHTML = '⏺ REC';
+    btnRecord.style.borderColor = '';
+    btnRecord.style.color = '';
+  }
 
   // ═══ ABOUT PANEL ═══
   const aboutToggle = document.getElementById('aboutToggle');

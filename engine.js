@@ -128,6 +128,7 @@ class MandalaEngine {
     const W=this.width, H=this.height;
     const cx=W/2, cy=H/2;
     const maxR=Math.min(cx,cy)*0.9;
+    this._sf = W / 800;
     const {rings,petals,symmetry,complexity,scale,shapes,rotation}=this.params;
     const r=maxR*(scale/100);
     const rotRad=(rotation||0)*Math.PI/180;
@@ -209,13 +210,13 @@ class MandalaEngine {
 
   // ──── OUTER PROTECTION ────
   _outerProtection(ctx,pal,r){
-    const lw=this.params.lineWidth;
+    const lw=this.params.lineWidth*this._sf, s=this._sf;
     ctx.strokeStyle=pal.stroke; ctx.lineWidth=lw;
-    ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,r+10*s,0,Math.PI*2); ctx.stroke();
     ctx.lineWidth=lw*.5;
-    for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(0,0,r+15+i*5,0,Math.PI*2);ctx.stroke();}
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(0,0,r+(15+i*5)*s,0,Math.PI*2);ctx.stroke();}
     for(let i=0;i<72;i++){
-      const a=(i/72)*Math.PI*2,ir=r+15,fh=8+Math.sin(i*5)*4;
+      const a=(i/72)*Math.PI*2,ir=r+15*s,fh=(8+Math.sin(i*5)*4)*s;
       ctx.save();ctx.rotate(a);
       ctx.fillStyle=pal.colors[i%pal.colors.length]+'33';
       ctx.beginPath();ctx.moveTo(0,-ir);
@@ -230,7 +231,7 @@ class MandalaEngine {
     for(let s=0;s<sym;s++){
       ctx.save();ctx.rotate((s/sym)*Math.PI*2);
       const t=r*.85;
-      this._sierpinski(ctx,0,-t,-t*Math.sin(Math.PI/3),t*.5,t*Math.sin(Math.PI/3),t*.5,d,pal,0,lw,so,fm);
+      this._sierpinski(ctx,0,-t,-t*Math.sin(Math.PI/3),t*.5,t*Math.sin(Math.PI/3),t*.5,d,pal,0,lw*this._sf,so,fm);
       ctx.restore();
     }
   }
@@ -251,7 +252,7 @@ class MandalaEngine {
 
   // ──── SHAPES ────
   _squareGate(ctx,r,pal,ci,prog){
-    const sz=r*1.05,gw=sz*.2,lw=this.params.lineWidth,fm=this.params.filledMode;
+    const sz=r*1.05,gw=sz*.2,lw=this.params.lineWidth*this._sf,fm=this.params.filledMode;
     ctx.save();ctx.rotate(Math.PI/4*prog);
     if(fm){ctx.fillStyle=pal.colors[ci]+'33';ctx.fillRect(-sz/2,-sz/2,sz,sz);}
     ctx.strokeStyle=pal.colors[ci]+'88';ctx.lineWidth=lw*1.5;
@@ -265,7 +266,7 @@ class MandalaEngine {
   }
 
   _triangles(ctx,r,pal,ci,sym){
-    const lw=this.params.lineWidth,so=this.params.strokeOnly,fm=this.params.filledMode;
+    const lw=this.params.lineWidth*this._sf,so=this.params.strokeOnly,fm=this.params.filledMode;
     for(let i=0;i<sym;i++){
       ctx.save();ctx.rotate((i/sym)*Math.PI*2);
       ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(-r*.3,-r*.4);ctx.lineTo(r*.3,-r*.4);ctx.closePath();
@@ -276,7 +277,7 @@ class MandalaEngine {
   }
 
   _circleRing(ctx,r,pal,ci,petals){
-    const lw=this.params.lineWidth,so=this.params.strokeOnly,fm=this.params.filledMode;
+    const lw=this.params.lineWidth*this._sf,so=this.params.strokeOnly,fm=this.params.filledMode;
     ctx.strokeStyle=pal.colors[ci]+'aa';ctx.lineWidth=lw*.8;
     ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
     const pr=r*.15;
@@ -291,7 +292,7 @@ class MandalaEngine {
   }
 
   _lotus(ctx,r,pal,ci,petals){
-    const lw=this.params.lineWidth,so=this.params.strokeOnly,fm=this.params.filledMode;
+    const lw=this.params.lineWidth*this._sf,so=this.params.strokeOnly,fm=this.params.filledMode;
     for(let layer=0;layer<2;layer++){
       const lr=r*(1-layer*.3),off=layer*(Math.PI/petals);
       for(let i=0;i<petals;i++){
@@ -311,7 +312,7 @@ class MandalaEngine {
   }
 
   _diamonds(ctx,r,pal,ci,sym){
-    const lw=this.params.lineWidth,so=this.params.strokeOnly,fm=this.params.filledMode;
+    const lw=this.params.lineWidth*this._sf,so=this.params.strokeOnly,fm=this.params.filledMode;
     for(let i=0;i<sym;i++){
       ctx.save();ctx.rotate((i/sym)*Math.PI*2);ctx.translate(0,-r);
       const d=r*.12;
@@ -335,14 +336,14 @@ class MandalaEngine {
   }
 
   _detailDots(ctx,r,pal,sym,li){
-    const dr=r*(.9-li*.08),n=sym*(li+1),dot=Math.max(1,3-li)*this.params.lineWidth;
+    const dr=r*(.9-li*.08),n=sym*(li+1),dot=Math.max(1,3-li)*this.params.lineWidth*this._sf;
     for(let i=0;i<n;i++){
       const a=(i/n)*Math.PI*2;
       ctx.fillStyle=pal.colors[(li+i)%pal.colors.length]+'55';
       ctx.beginPath();ctx.arc(Math.cos(a)*dr,Math.sin(a)*dr,dot,0,Math.PI*2);ctx.fill();
     }
     if(li%2===0){
-      ctx.strokeStyle=pal.colors[li%pal.colors.length]+'22';ctx.lineWidth=this.params.lineWidth*.3;
+      ctx.strokeStyle=pal.colors[li%pal.colors.length]+'22';ctx.lineWidth=this.params.lineWidth*this._sf*.3;
       ctx.beginPath();ctx.arc(0,0,dr,0,Math.PI*2);ctx.stroke();
     }
   }
@@ -352,7 +353,7 @@ class MandalaEngine {
     g.addColorStop(0,pal.colors[0]+'aa');g.addColorStop(.5,pal.colors[1]+'44');g.addColorStop(1,'transparent');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r*3,0,Math.PI*2);ctx.fill();
     if(!this.params.strokeOnly||this.params.filledMode){ctx.fillStyle=pal.colors[0];ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();}
-    ctx.strokeStyle=pal.colors[0];ctx.lineWidth=this.params.lineWidth;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle=pal.colors[0];ctx.lineWidth=this.params.lineWidth*this._sf;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
     ctx.fillStyle=this.params.strokeOnly?pal.colors[0]:'#fff';ctx.beginPath();ctx.arc(0,0,r*.3,0,Math.PI*2);ctx.fill();
   }
 
@@ -360,7 +361,7 @@ class MandalaEngine {
   _sacredObjects(ctx,pal,r){
     const{type,count,size,ring,style,opacity}=this.params.objects;
     if(type==='none'||!SACRED_OBJECTS[type])return;
-    const obj=SACRED_OBJECTS[type],os=r*(size/100),lw=this.params.lineWidth;
+    const obj=SACRED_OBJECTS[type],os=r*(size/100),lw=this.params.lineWidth*this._sf;
     ctx.save();ctx.globalAlpha=opacity;
     if(style==='glow'){ctx.shadowColor=pal.colors[0];ctx.shadowBlur=os*.3;}
     if(count<=1&&ring===0){
@@ -386,7 +387,7 @@ class MandalaEngine {
       m={text:this.params.customMantra,chars:this.params.customMantra.split('')};
     if(!m.chars.length)return;
     ctx.save();ctx.globalAlpha=this.params.mantraOpacity;
-    const ch=m.chars,fs=Math.max(10,r*.04);
+    const ch=m.chars,fs=Math.max(10*this._sf,r*.04);
     ctx.font=`${fs}px 'JetBrains Mono',monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
     const enc=this.params.mantraEncoding;
     if(enc==='spiral'){
@@ -400,11 +401,11 @@ class MandalaEngine {
           ctx.save();ctx.translate(Math.cos(a)*rr,Math.sin(a)*rr);ctx.rotate(a+Math.PI/2);
           ctx.fillStyle=pal.colors[(i+ring)%pal.colors.length]+'88';ctx.fillText(ch[i%ch.length],0,0);ctx.restore();}}
     }else if(enc==='hidden'){
-      ctx.globalAlpha=this.params.mantraOpacity*.3;ctx.font=`${fs*.6}px 'JetBrains Mono',monospace`;ctx.fillStyle=pal.colors[0]+'44';
+      ctx.globalAlpha=this.params.mantraOpacity*.3;ctx.font=`${Math.round(fs*.6)}px 'JetBrains Mono',monospace`;ctx.fillStyle=pal.colors[0]+'44';
       for(let i=0;i<36;i++){ctx.save();ctx.rotate((i/36)*Math.PI*2);ctx.fillText(m.text,0,-r*.5);ctx.restore();}
     }else if(enc==='glitch'){
       const tc=ch.length*8;
-      for(let i=0;i<tc;i++){const a=this.seededRandom()*Math.PI*2,d=this.seededRandom()*r*.85,go=(this.seededRandom()-.5)*4;
+      for(let i=0;i<tc;i++){const a=this.seededRandom()*Math.PI*2,d=this.seededRandom()*r*.85,go=(this.seededRandom()-.5)*4*this._sf;
         ctx.save();ctx.translate(Math.cos(a)*d+go,Math.sin(a)*d);ctx.rotate(this.seededRandom()*Math.PI*2);
         ctx.fillStyle=pal.colors[i%pal.colors.length]+'77';ctx.fillText(ch[i%ch.length],0,0);ctx.restore();}
     }
@@ -414,7 +415,7 @@ class MandalaEngine {
   // ──── CUSTOM TEXT ────
   _customText(ctx,pal,r){
     const txt=this.params.customText;if(!txt)return;
-    const fs=this.params.customTextSize||12;
+    const fs=(this.params.customTextSize||12)*this._sf;
     const ringPos=this.params.customTextRing||5;
     const rr=r*(ringPos/10);
     ctx.save();ctx.globalAlpha=.7;
