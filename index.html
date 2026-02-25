@@ -17,7 +17,7 @@
     <h3 class="about-title">&#9784; META MANDALA</h3>
     <p class="about-desc">Procedural sacred geometry engine fused with glitch aesthetics. Generate, animate and export mandala art rooted in Buddhist visual traditions &mdash; from Vajrayana symmetry to Sierpinski fractals &mdash; through a CRT-era digital lens.</p>
     <div class="about-badge">open-source project</div>
-    <div class="about-author">initiated by G3OSHA</div>
+    <p class="about-desc" style="margin-bottom:12px">initiated by G3OSHA</p>
     <div class="about-links">
       <a href="https://github.com/g3osha/META_MANDALA" target="_blank" rel="noopener" title="GitHub">
         <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.2 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.2.9 2.4v3.5c0 .3.2.7.8.6A12 12 0 0012 .3"/></svg>
@@ -160,15 +160,20 @@
           <div class="canvas-corner br">╝</div>
         </div>
         <div class="canvas-actions">
-          <button class="action-btn" id="btnGenerate" title="[G]">☸ GENERATE</button>
-          <button class="action-btn" id="btnAnimate" title="[Space]">◎ ANIMATE</button>
+          <div class="action-group">
+            <select id="animMode" class="select-dark select-action" title="Animation mode">
+              <option value="rotate">Rotate</option>
+              <option value="play">Play</option>
+            </select>
+            <button class="action-btn" id="btnAnimate" title="[Space]">◎ START</button>
+          </div>
           <button class="action-btn" id="btnFlyInto" title="Fly into mandala">⊛ FLY INTO</button>
           <button class="action-btn" id="btnExport" title="[E]">⬡ EXPORT</button>
-          <button class="action-btn" id="btnExportGif" title="GIF/Video">⟐ GIF</button>
+          <button class="action-btn" id="btnImport" title="Import JSON">↑ IMPORT</button>
           <button class="action-btn" id="btnAscii" title="ASCII mode [A]">▣ ASCII</button>
           <button class="action-btn" id="btnRandom" title="[R]">⚡ RANDOM</button>
-          <button class="action-btn" id="btnAutoPlay" title="Auto-generate random mandalas [P]">▶ PLAY</button>
           <button class="action-btn" id="btnRecord" title="Record video">⏺ REC</button>
+          <input type="file" id="importFile" accept=".json" hidden>
         </div>
       </div>
 
@@ -279,12 +284,39 @@
 <!-- Export Modal -->
 <div class="modal-overlay hidden" id="exportModal">
   <div class="modal">
-    <h3 class="section-title" style="margin-bottom:16px">⬡ EXPORT PNG</h3>
-    <div class="export-options">
-      <button class="export-res-btn" data-w="800">800px</button>
-      <button class="export-res-btn" data-w="1024">1024px</button>
-      <button class="export-res-btn active" data-w="2048">2K</button>
-      <button class="export-res-btn" data-w="4096">4K</button>
+    <h3 class="section-title" style="margin-bottom:16px">⬡ EXPORT</h3>
+    <div class="export-format-tabs">
+      <button class="export-fmt-btn active" data-fmt="png">PNG</button>
+      <button class="export-fmt-btn" data-fmt="gif">GIF</button>
+      <button class="export-fmt-btn" data-fmt="json">JSON</button>
+    </div>
+    <div id="exportPngOpts">
+      <div class="export-options">
+        <button class="export-res-btn" data-w="800">800px</button>
+        <button class="export-res-btn" data-w="1024">1024px</button>
+        <button class="export-res-btn active" data-w="2048">2K</button>
+        <button class="export-res-btn" data-w="4096">4K</button>
+      </div>
+    </div>
+    <div id="exportGifOpts" class="hidden">
+      <div class="gif-options">
+        <label class="control-row"><span class="label-text">Format</span>
+          <select id="gifFormat" class="select-dark select-sm"><option value="gif">GIF</option><option value="webm">WebM</option></select>
+        </label>
+        <label class="control-row"><span class="label-text">Size</span>
+          <select id="gifResolution" class="select-dark select-sm"><option value="400">400px</option><option value="600" selected>600px</option><option value="800">800px</option></select>
+        </label>
+        <label class="control-row"><span class="label-text">Duration</span>
+          <select id="gifDuration" class="select-dark select-sm"><option value="2">2s</option><option value="3" selected>3s</option><option value="5">5s</option><option value="8">8s</option></select>
+        </label>
+        <label class="control-row"><span class="label-text">FPS</span>
+          <select id="gifFps" class="select-dark select-sm"><option value="10">10</option><option value="15" selected>15</option><option value="20">20</option></select>
+        </label>
+        <label class="control-row"><span class="label-text">Speed</span><input type="range" id="gifSpeed" min="1" max="10" value="3"><span class="val" id="gifSpeedVal">3</span></label>
+      </div>
+    </div>
+    <div id="exportJsonOpts" class="hidden">
+      <p style="font-size:9px;color:var(--text-dim);line-height:1.5;margin:8px 0">Export all mandala parameters, glitch settings and color correction as a JSON file. Use Import to restore.</p>
     </div>
     <div class="modal-actions">
       <button class="action-btn" id="btnExportConfirm">⬡ DOWNLOAD</button>
@@ -293,36 +325,6 @@
     <div class="export-progress hidden" id="exportProgress">
       <div class="progress-bar"><div class="progress-fill" id="exportProgressFill"></div></div>
       <span class="progress-text" id="exportProgressText"></span>
-    </div>
-  </div>
-</div>
-
-<!-- GIF Modal -->
-<div class="modal-overlay hidden" id="gifModal">
-  <div class="modal">
-    <h3 class="section-title" style="margin-bottom:16px">⟐ EXPORT GIF / WEBM</h3>
-    <div class="gif-options">
-      <label class="control-row"><span class="label-text">Format</span>
-        <select id="gifFormat" class="select-dark select-sm"><option value="gif">GIF</option><option value="webm">WebM</option></select>
-      </label>
-      <label class="control-row"><span class="label-text">Size</span>
-        <select id="gifResolution" class="select-dark select-sm"><option value="400">400px</option><option value="600" selected>600px</option><option value="800">800px</option></select>
-      </label>
-      <label class="control-row"><span class="label-text">Duration</span>
-        <select id="gifDuration" class="select-dark select-sm"><option value="2">2s</option><option value="3" selected>3s</option><option value="5">5s</option><option value="8">8s</option></select>
-      </label>
-      <label class="control-row"><span class="label-text">FPS</span>
-        <select id="gifFps" class="select-dark select-sm"><option value="10">10</option><option value="15" selected>15</option><option value="20">20</option></select>
-      </label>
-      <label class="control-row"><span class="label-text">Speed</span><input type="range" id="gifSpeed" min="1" max="10" value="3"><span class="val" id="gifSpeedVal">3</span></label>
-    </div>
-    <div class="modal-actions">
-      <button class="action-btn" id="btnGifConfirm">⟐ RENDER</button>
-      <button class="action-btn" id="btnGifCancel">✕ CANCEL</button>
-    </div>
-    <div class="export-progress hidden" id="gifProgress">
-      <div class="progress-bar"><div class="progress-fill" id="gifProgressFill"></div></div>
-      <span class="progress-text" id="gifProgressText"></span>
     </div>
   </div>
 </div>

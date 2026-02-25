@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isFlyingInto = false, flyFrame = null, flyTime = 0;
   let asciiMode = false;
   let selectedExportRes = 2048;
+  let currentExportFmt = 'png';
   const ASCII_COLS = 120;
 
   function generate() {
@@ -192,16 +193,45 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('imageKaleidoscope').addEventListener('change', function(){ engine.imageParams.kaleidoscope=this.checked; generate(); });
   document.getElementById('imageEdgeDetect').addEventListener('change', function(){ engine.imageParams.edgeDetect=this.checked; engine.processImage(); generate(); });
 
-  // ═══ ANIMATION — canvas-internal rotation ═══
-  document.getElementById('btnAnimate').addEventListener('click', ()=>{
-    if (isFlyingInto) stopFlyInto();
-    const btn = document.getElementById('btnAnimate');
-    if (isAnimating) { stopAnim(); btn.classList.remove('active'); btn.innerHTML='◎ ANIMATE'; }
-    else { startAnim(); btn.classList.add('active'); btn.innerHTML='◎ STOP'; }
+  // ═══ ANIMATE / PLAY (merged) ═══
+  const animModeSelect = document.getElementById('animMode');
+  const btnAnimate = document.getElementById('btnAnimate');
+  let autoPlayInterval = null;
+
+  btnAnimate.addEventListener('click', () => {
+    if (isFlyingInto) { stopFlyInto(); document.getElementById('btnFlyInto').classList.remove('active'); document.getElementById('btnFlyInto').innerHTML='⊛ FLY INTO'; }
+    if (isAnimating || autoPlayInterval) {
+      stopAll();
+    } else {
+      const mode = animModeSelect.value;
+      if (mode === 'rotate') startAnim();
+      else startAutoPlay();
+    }
   });
 
-  function startAnim() { isAnimating=true; animTime=0; animLoop(); }
-  function stopAnim() { isAnimating=false; if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;} engine.setParam('rotation',0); generate(); }
+  function stopAll() {
+    if (isAnimating) stopAnim();
+    if (autoPlayInterval) stopAutoPlay();
+    btnAnimate.classList.remove('active');
+    btnAnimate.innerHTML = '◎ START';
+    btnAnimate.style.borderColor = '';
+    btnAnimate.style.color = '';
+  }
+
+  function startAnim() {
+    isAnimating=true; animTime=0;
+    btnAnimate.classList.add('active');
+    btnAnimate.innerHTML='◎ STOP';
+    animLoop();
+  }
+
+  function stopAnim() {
+    isAnimating=false;
+    if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+    engine.setParam('rotation',0);
+    generate();
+  }
+
   function animLoop() {
     if(!isAnimating) return;
     animTime++; engine.setParam('rotation', animTime*0.3);
@@ -210,9 +240,25 @@ document.addEventListener('DOMContentLoaded', () => {
     animFrame = requestAnimationFrame(animLoop);
   }
 
+  function startAutoPlay() {
+    btnAnimate.classList.add('active');
+    btnAnimate.innerHTML = '◎ STOP';
+    triggerRandom();
+    autoPlayInterval = setInterval(triggerRandom, 250);
+  }
+
+  function stopAutoPlay() {
+    clearInterval(autoPlayInterval);
+    autoPlayInterval = null;
+  }
+
+  function triggerRandom() {
+    document.getElementById('btnRandom').click();
+  }
+
   // ═══ FLY-INTO — smooth procedural tunnel ═══
   document.getElementById('btnFlyInto').addEventListener('click', ()=>{
-    if (isAnimating) { stopAnim(); document.getElementById('btnAnimate').classList.remove('active'); document.getElementById('btnAnimate').innerHTML='◎ ANIMATE'; }
+    if (isAnimating || autoPlayInterval) { stopAll(); }
     const btn = document.getElementById('btnFlyInto');
     if (isFlyingInto) { stopFlyInto(); btn.classList.remove('active'); btn.innerHTML='⊛ FLY INTO'; }
     else { startFlyInto(); btn.classList.add('active'); btn.innerHTML='⊛ STOP'; }
@@ -252,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pal = engine.getPalette();
     const W = 800, H = 800, cx = W/2, cy = H/2;
 
+    ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = pal.bg;
     ctx.fillRect(0, 0, W, H);
@@ -308,9 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else document.exitFullscreen();
   });
 
-  // ═══ GENERATE / RANDOM ═══
-  document.getElementById('btnGenerate').addEventListener('click', ()=>{ currentSeed=Math.random()*99999; generate(); });
-
+  // ═══ RANDOM ═══
   document.getElementById('btnRandom').addEventListener('click', ()=>{
     currentSeed = Math.random()*99999;
     engine.setParam('rings', 2+Math.floor(Math.random()*10));
@@ -358,9 +403,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('objectStyle').value = o.style;
   }
 
-  // ═══ HI-RES EXPORT ═══
+  // ═══ EXPORT MODAL (PNG / GIF / JSON) ═══
   document.getElementById('btnExport').addEventListener('click', ()=>document.getElementById('exportModal').classList.remove('hidden'));
   document.getElementById('btnExportCancel').addEventListener('click', ()=>document.getElementById('exportModal').classList.add('hidden'));
+
+  document.querySelectorAll('.export-fmt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.export-fmt-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentExportFmt = btn.dataset.fmt;
+      document.getElementById('exportPngOpts').classList.toggle('hidden', currentExportFmt !== 'png');
+      document.getElementById('exportGifOpts').classList.toggle('hidden', currentExportFmt !== 'gif');
+      document.getElementById('exportJsonOpts').classList.toggle('hidden', currentExportFmt !== 'json');
+      const dlBtn = document.getElementById('btnExportConfirm');
+      if (currentExportFmt === 'png') dlBtn.innerHTML = '⬡ DOWNLOAD';
+      else if (currentExportFmt === 'gif') dlBtn.innerHTML = '⟐ RENDER';
+      else dlBtn.innerHTML = '⬡ EXPORT JSON';
+    });
+  });
+
   document.querySelectorAll('.export-res-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.export-res-btn').forEach(b=>b.classList.remove('active'));
@@ -368,7 +429,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('btnExportConfirm').addEventListener('click', ()=>exportHiRes(selectedExportRes));
+  document.getElementById('gifSpeed').addEventListener('input', function(){ updateVal('gifSpeed'); });
+
+  document.getElementById('btnExportConfirm').addEventListener('click', () => {
+    if (currentExportFmt === 'png') exportHiRes(selectedExportRes);
+    else if (currentExportFmt === 'gif') exportGifFromModal();
+    else exportJSON();
+  });
 
   function exportHiRes(size) {
     const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
@@ -392,20 +459,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ═══ GIF / VIDEO EXPORT ═══
-  document.getElementById('btnExportGif').addEventListener('click', ()=>document.getElementById('gifModal').classList.remove('hidden'));
-  document.getElementById('btnGifCancel').addEventListener('click', ()=>document.getElementById('gifModal').classList.add('hidden'));
-  document.getElementById('gifSpeed').addEventListener('input', function(){ updateVal('gifSpeed'); });
-
-  document.getElementById('btnGifConfirm').addEventListener('click', ()=>{
+  function exportGifFromModal() {
     const fmt=document.getElementById('gifFormat').value, res=parseInt(document.getElementById('gifResolution').value);
     const dur=parseInt(document.getElementById('gifDuration').value), fps=parseInt(document.getElementById('gifFps').value);
     const spd=parseInt(document.getElementById('gifSpeed').value);
     if(fmt==='webm') exportWebM(res,dur,fps,spd); else exportGIF(res,dur,fps,spd);
-  });
+  }
 
   function exportGIF(size,duration,fps,speed) {
-    const prog=document.getElementById('gifProgress'), fill=document.getElementById('gifProgressFill'), txt=document.getElementById('gifProgressText');
+    const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
     prog.classList.remove('hidden');
     const total=fps*duration, enc=new GIFEncoder(size,size); enc.setDelay(1000/fps);
     const fc=document.createElement('canvas'); fc.width=size; fc.height=size;
@@ -417,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const blob=enc.render(), link=document.createElement('a');
           link.download=`meta-mandala-${Date.now()}.gif`; link.href=URL.createObjectURL(blob); link.click();
           fill.style.width='100%'; txt.textContent='Done!';
-          setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('gifModal').classList.add('hidden'); },600);
+          setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
           engine.setParam('rotation',0); generate();
         }); return;
       }
@@ -436,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function exportWebM(size,duration,fps,speed) {
-    const prog=document.getElementById('gifProgress'), fill=document.getElementById('gifProgressFill'), txt=document.getElementById('gifProgressText');
+    const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
     prog.classList.remove('hidden');
     const fc=document.createElement('canvas'); fc.width=size; fc.height=size;
     const exp=new VideoExporter(fc,{fps,duration});
@@ -452,52 +514,121 @@ document.addEventListener('DOMContentLoaded', () => {
     const link=document.createElement('a'); link.download=`meta-mandala-${Date.now()}.webm`;
     link.href=URL.createObjectURL(blob); link.click();
     fill.style.width='100%'; txt.textContent='Done!';
-    setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('gifModal').classList.add('hidden'); },600);
+    setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
     engine.setParam('rotation',0); generate();
   }
 
-  // ═══ KEYBOARD ═══
-  document.addEventListener('keydown', e=>{
-    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
-    switch(e.key.toLowerCase()){
-      case 'g': currentSeed=Math.random()*99999; generate(); break;
-      case 'r': document.getElementById('btnRandom').click(); break;
-      case 'e': document.getElementById('btnExport').click(); break;
-      case 'f': document.getElementById('btnFullscreen').click(); break;
-      case 'a': document.getElementById('btnAscii').click(); break;
-      case 'p': document.getElementById('btnAutoPlay').click(); break;
-      case ' ': e.preventDefault(); document.getElementById('btnAnimate').click(); break;
-      case 'escape':
-        document.getElementById('exportModal').classList.add('hidden');
-        document.getElementById('gifModal').classList.add('hidden'); break;
+  // ═══ JSON EXPORT / IMPORT ═══
+  function buildMandalaJSON() {
+    const p = engine.params;
+    return {
+      version: '0.1.0',
+      seed: currentSeed,
+      params: {
+        rings: p.rings, petals: p.petals, symmetry: p.symmetry,
+        complexity: p.complexity, scale: p.scale, lineWidth: p.lineWidth,
+        innerRotation: p.innerRotation, fractalDepth: p.fractalDepth,
+        strokeOnly: p.strokeOnly, filledMode: p.filledMode,
+        shapes: Array.from(p.shapes),
+        palette: p.palette, tradition: p.tradition,
+        mantra: p.mantra, mantraEncoding: p.mantraEncoding,
+        mantraOpacity: p.mantraOpacity, customMantra: p.customMantra || '',
+        customText: p.customText || '',
+        customTextSize: p.customTextSize || 12,
+        customTextRing: p.customTextRing || 5,
+        objects: { ...p.objects },
+        customGradient: { ...p.customGradient }
+      },
+      glitch: { ...glitch.params },
+      colorCorrection: { ...glitch.colorCorrection }
+    };
+  }
+
+  function exportJSON() {
+    const data = buildMandalaJSON();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.download = `meta-mandala-${Date.now()}.json`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    document.getElementById('exportModal').classList.add('hidden');
+  }
+
+  function importJSON(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        applyMandalaJSON(data);
+      } catch(err) { console.error('Invalid JSON:', err); }
+    };
+    reader.readAsText(file);
+  }
+
+  function applyMandalaJSON(data) {
+    if (data.seed != null) currentSeed = data.seed;
+    const p = data.params;
+    if (p) {
+      if (p.tradition) {
+        engine.setTradition(p.tradition);
+        document.querySelectorAll('.tradition-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.tradition === p.tradition);
+        });
+      }
+      ['rings','petals','symmetry','complexity','scale','lineWidth',
+       'innerRotation','fractalDepth','strokeOnly','filledMode',
+       'mantra','mantraEncoding','mantraOpacity','customMantra',
+       'customText','customTextSize','customTextRing','palette'].forEach(k => {
+        if (p[k] != null) engine.setParam(k, p[k]);
+      });
+      if (p.shapes) engine.params.shapes = new Set(p.shapes);
+      if (p.objects) Object.assign(engine.params.objects, p.objects);
+      if (p.customGradient) Object.assign(engine.params.customGradient, p.customGradient);
     }
+    if (data.glitch) {
+      Object.keys(data.glitch).forEach(k => glitch.setParam(k, data.glitch[k]));
+    }
+    if (data.colorCorrection) {
+      Object.keys(data.colorCorrection).forEach(k => glitch.setColorCorrection(k, data.colorCorrection[k]));
+    }
+    syncUI(); syncGlitchUI(); syncObjectsUI(); syncImportUI(data);
+    generate();
+  }
+
+  function syncImportUI(data) {
+    const p = data.params || {};
+    if (p.customText) document.getElementById('customTextInput').value = p.customText;
+    if (p.mantra) {
+      document.getElementById('mantraSelect').value = p.mantra;
+      document.getElementById('customMantra').classList.toggle('hidden', p.mantra !== 'custom_mantra');
+      if (p.customMantra) document.getElementById('customMantra').value = p.customMantra;
+    }
+    setSlider('scale', p.scale || 80);
+    setSlider('customTextSize', p.customTextSize || 12);
+    setSlider('customTextRing', p.customTextRing || 5);
+    setSlider('mantraOpacity', Math.round((p.mantraOpacity || 0.4) * 100));
+    if (p.mantraEncoding) document.getElementById('mantraEncoding').value = p.mantraEncoding;
+    if (p.customGradient) {
+      document.getElementById('gradientEnabled').checked = !!p.customGradient.enabled;
+      if (p.customGradient.color1) document.getElementById('gradColor1').value = p.customGradient.color1;
+      if (p.customGradient.color2) document.getElementById('gradColor2').value = p.customGradient.color2;
+      if (p.customGradient.color3) document.getElementById('gradColor3').value = p.customGradient.color3;
+      if (p.customGradient.bgType) document.getElementById('gradBgType').value = p.customGradient.bgType;
+      if (p.customGradient.bg) document.getElementById('gradBgColor').value = p.customGradient.bg;
+    }
+    const cc = data.colorCorrection || {};
+    ['hueRotate','saturation','brightness','contrast','invert'].forEach(k => {
+      if (cc[k] != null) setSlider(k, cc[k]);
+    });
+  }
+
+  // ═══ IMPORT BUTTON ═══
+  document.getElementById('btnImport').addEventListener('click', () => {
+    document.getElementById('importFile').click();
   });
-
-  // ═══ AUTO-PLAY (random mandalas on interval) ═══
-  let autoPlayInterval = null;
-  const btnAutoPlay = document.getElementById('btnAutoPlay');
-  btnAutoPlay.addEventListener('click', ()=>{
-    if (autoPlayInterval) { stopAutoPlay(); }
-    else { startAutoPlay(); }
+  document.getElementById('importFile').addEventListener('change', function() {
+    if (this.files[0]) { importJSON(this.files[0]); this.value = ''; }
   });
-
-  function startAutoPlay() {
-    btnAutoPlay.classList.add('active');
-    btnAutoPlay.innerHTML = '▶ STOP';
-    triggerRandom();
-    autoPlayInterval = setInterval(triggerRandom, 3000);
-  }
-
-  function stopAutoPlay() {
-    clearInterval(autoPlayInterval);
-    autoPlayInterval = null;
-    btnAutoPlay.classList.remove('active');
-    btnAutoPlay.innerHTML = '▶ PLAY';
-  }
-
-  function triggerRandom() {
-    document.getElementById('btnRandom').click();
-  }
 
   // ═══ RECORD (capture canvas as WebM video) ═══
   let mediaRecorder = null, recordedChunks = [];
@@ -508,8 +639,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function startRecording() {
-    const stream = mandalaCanvas.captureStream(30);
-    const glitchStream = glitchCanvas.captureStream(30);
     const combined = document.createElement('canvas');
     combined.width = 800; combined.height = 800;
     const cCtx = combined.getContext('2d');
@@ -561,6 +690,21 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', e => {
     if (!aboutPanel.classList.contains('hidden') && !aboutPanel.contains(e.target) && e.target !== aboutToggle)
       aboutPanel.classList.add('hidden');
+  });
+
+  // ═══ KEYBOARD ═══
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+    switch(e.key.toLowerCase()){
+      case 'g': currentSeed=Math.random()*99999; generate(); break;
+      case 'r': document.getElementById('btnRandom').click(); break;
+      case 'e': document.getElementById('btnExport').click(); break;
+      case 'f': document.getElementById('btnFullscreen').click(); break;
+      case 'a': document.getElementById('btnAscii').click(); break;
+      case ' ': e.preventDefault(); btnAnimate.click(); break;
+      case 'escape':
+        document.getElementById('exportModal').classList.add('hidden'); break;
+    }
   });
 
   // ═══ INIT ═══

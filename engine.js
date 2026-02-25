@@ -126,6 +126,7 @@ class MandalaEngine {
     this.resetSeed(seed);
     const ctx=this.ctx, pal=this.getPalette();
     const W=this.width, H=this.height;
+    ctx.setTransform(1,0,0,1,0,0);
     const cx=W/2, cy=H/2;
     const maxR=Math.min(cx,cy)*0.9;
     this._sf = W / 800;
