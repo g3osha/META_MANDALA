@@ -425,8 +425,8 @@ class MandalaEngine {
     const charWidth=fs*.7;
     const totalChars=Math.max(chars.length, Math.floor(circumference/charWidth));
     for(let i=0;i<totalChars;i++){
-      const a=(i/totalChars)*Math.PI*2-Math.PI/2;
-      ctx.save();ctx.rotate(a);ctx.translate(0,-rr);ctx.rotate(Math.PI/2);
+      const a=(i/totalChars)*Math.PI*2;
+      ctx.save();ctx.rotate(a);ctx.translate(0,-rr);
       ctx.fillStyle=pal.colors[i%pal.colors.length]+'aa';
       ctx.fillText(chars[i%chars.length],0,0);ctx.restore();
     }

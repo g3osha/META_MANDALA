@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSeed = Math.random() * 99999;
   let isAnimating = false, animFrame = null, animTime = 0;
   let isFlyingInto = false, flyFrame = null, flyTime = 0;
-  let asciiMode = true;
+  let asciiMode = false;
   let selectedExportRes = 2048;
   const ASCII_COLS = 120;
 
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ═══ COLOR CORRECTION ═══
   ['hueRotate','saturation','brightness','contrast','invert'].forEach(id => {
     const el = document.getElementById(id); if(!el) return;
-    el.addEventListener('input', ()=>{ updateVal(id); glitch.setColorCorrection(id, parseFloat(el.value)); glitch.apply(); });
+    el.addEventListener('input', ()=>{ updateVal(id); glitch.setColorCorrection(id, parseFloat(el.value)); generate(); });
   });
 
   document.querySelectorAll('.color-preset').forEach(btn => {
@@ -293,8 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ═══ ASCII MODE ═══
   const btnAscii = document.getElementById('btnAscii');
-  btnAscii.classList.add('active');
-  btnAscii.innerHTML = '▣ ASCII OFF';
   btnAscii.addEventListener('click', ()=>{
     asciiMode = !asciiMode;
     btnAscii.classList.toggle('active', asciiMode);
@@ -472,6 +470,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('exportModal').classList.add('hidden');
         document.getElementById('gifModal').classList.add('hidden'); break;
     }
+  });
+
+  // ═══ ABOUT PANEL ═══
+  const aboutToggle = document.getElementById('aboutToggle');
+  const aboutPanel = document.getElementById('aboutPanel');
+  const aboutClose = document.getElementById('aboutClose');
+  aboutToggle.addEventListener('click', () => aboutPanel.classList.toggle('hidden'));
+  aboutClose.addEventListener('click', () => aboutPanel.classList.add('hidden'));
+  document.addEventListener('click', e => {
+    if (!aboutPanel.classList.contains('hidden') && !aboutPanel.contains(e.target) && e.target !== aboutToggle)
+      aboutPanel.classList.add('hidden');
   });
 
   // ═══ INIT ═══
