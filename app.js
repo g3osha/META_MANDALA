@@ -483,19 +483,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
     prog.classList.remove('hidden'); fill.style.width='20%'; txt.textContent=`Rendering SVG ${size}×${size}...`;
     requestAnimationFrame(()=>{
-      const svgCtx = new C2S(size, size);
-      const mockCanvas = { width:size, height:size, getContext:()=>svgCtx };
-      engine.renderToCanvas(mockCanvas, currentSeed);
-      fill.style.width='80%'; txt.textContent='Encoding SVG...';
-      requestAnimationFrame(()=>{
-        const svgStr = svgCtx.toSVG();
-        const blob = new Blob([svgStr], {type:'image/svg+xml'});
-        const link = document.createElement('a');
-        link.download = `meta-mandala-${size}px-${Date.now()}.svg`;
-        link.href = URL.createObjectURL(blob); link.click();
-        fill.style.width='100%'; txt.textContent='Done!';
-        setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
-      });
+      try {
+        const svgCtx = new C2S(size, size);
+        const mockCanvas = { width:size, height:size, getContext:()=>svgCtx };
+        engine.renderToCanvas(mockCanvas, currentSeed);
+        fill.style.width='80%'; txt.textContent='Encoding SVG...';
+        requestAnimationFrame(()=>{
+          const svgStr = svgCtx.toSVG();
+          const blob = new Blob([svgStr], {type:'image/svg+xml'});
+          const link = document.createElement('a');
+          link.download = `meta-mandala-${size}px-${Date.now()}.svg`;
+          link.href = URL.createObjectURL(blob); link.click();
+          fill.style.width='100%'; txt.textContent='Done!';
+          setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
+        });
+      } catch(err) {
+        console.error('SVG export error:', err);
+        fill.style.width='100%'; txt.textContent='Error: '+err.message;
+        setTimeout(()=>prog.classList.add('hidden'), 3000);
+      }
     });
   }
 

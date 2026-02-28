@@ -8,12 +8,16 @@ class C2S {
     this.lineWidth = 1; this.globalAlpha = 1; this.lineCap = 'butt'; this.lineJoin = 'miter';
     this.font = '10px sans-serif'; this.textAlign = 'start'; this.textBaseline = 'alphabetic';
     this.globalCompositeOperation = 'source-over';
+    this.shadowBlur = 0; this.shadowColor = 'transparent';
+    this.shadowOffsetX = 0; this.shadowOffsetY = 0;
+    this.imageSmoothingEnabled = true;
   }
 
   save() {
     this._stack.push({ m:[...this._matrix], fs:this.fillStyle, ss:this.strokeStyle,
       lw:this.lineWidth, ga:this.globalAlpha, f:this.font, ta:this.textAlign,
-      tb:this.textBaseline, lc:this.lineCap, lj:this.lineJoin, gco:this.globalCompositeOperation });
+      tb:this.textBaseline, lc:this.lineCap, lj:this.lineJoin, gco:this.globalCompositeOperation,
+      sb:this.shadowBlur, sc:this.shadowColor, sox:this.shadowOffsetX, soy:this.shadowOffsetY });
   }
 
   restore() {
@@ -22,6 +26,8 @@ class C2S {
     this.lineWidth=s.lw; this.globalAlpha=s.ga; this.font=s.f;
     this.textAlign=s.ta; this.textBaseline=s.tb; this.lineCap=s.lc;
     this.lineJoin=s.lj; this.globalCompositeOperation=s.gco;
+    this.shadowBlur=s.sb; this.shadowColor=s.sc;
+    this.shadowOffsetX=s.sox; this.shadowOffsetY=s.soy;
   }
 
   _mm(b) {
@@ -74,6 +80,20 @@ class C2S {
 
   arcTo(x1,y1,x2,y2,r) { this.lineTo(x1,y1); }
   rect(x,y,w,h) { this._path.push(`M${x} ${y}L${x+w} ${y}L${x+w} ${y+h}L${x} ${y+h}Z`); }
+
+  ellipse(cx,cy,rx,ry,rot,sa,ea,ccw) {
+    if(rx<=0||ry<=0) return;
+    const cos=Math.cos(rot), sin=Math.sin(rot);
+    const pts = 40;
+    let da = ea - sa;
+    if(ccw){ if(da>0) da -= Math.PI*2; } else { if(da<0) da += Math.PI*2; }
+    for(let i=0;i<=pts;i++){
+      const t = sa + (i/pts)*da;
+      const px = cx + cos*rx*Math.cos(t) - sin*ry*Math.sin(t);
+      const py = cy + sin*rx*Math.cos(t) + cos*ry*Math.sin(t);
+      this._path.push(i===0&&!this._path.length ? `M${px.toFixed(2)} ${py.toFixed(2)}` : `L${px.toFixed(2)} ${py.toFixed(2)}`);
+    }
+  }
 
   _resolveColor(c) {
     if(c instanceof SVGGrad) { c._register(); return `url(#${c.id})`; }
