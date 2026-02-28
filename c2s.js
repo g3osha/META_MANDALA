@@ -1,9 +1,9 @@
 /* Canvas-to-SVG context — converts Canvas 2D API calls to SVG markup
-   Optimized for compatibility with Photoshop, Cinema 4D, Illustrator */
+   Compatible with Photoshop, Cinema 4D, Illustrator */
 class C2S {
   constructor(w, h) {
     this.width = w; this.height = h;
-    this._defs = []; this._stack = []; this._path = [];
+    this._defs = []; this._els = []; this._stack = []; this._path = [];
     this._id = 0; this._matrix = [1,0,0,1,0,0];
     this.fillStyle = '#000'; this.strokeStyle = '#000';
     this.lineWidth = 1; this.globalAlpha = 1; this.lineCap = 'butt'; this.lineJoin = 'miter';
@@ -12,10 +12,6 @@ class C2S {
     this.shadowBlur = 0; this.shadowColor = 'transparent';
     this.shadowOffsetX = 0; this.shadowOffsetY = 0;
     this.imageSmoothingEnabled = true;
-
-    this._groups = [];
-    this._root = [];
-    this._current = this._root;
   }
 
   save() {
@@ -23,10 +19,6 @@ class C2S {
       lw:this.lineWidth, ga:this.globalAlpha, f:this.font, ta:this.textAlign,
       tb:this.textBaseline, lc:this.lineCap, lj:this.lineJoin, gco:this.globalCompositeOperation,
       sb:this.shadowBlur, sc:this.shadowColor, sox:this.shadowOffsetX, soy:this.shadowOffsetY });
-    const g = { tag:'g', attrs:this._mstr(), children:[] };
-    this._current.push(g);
-    this._groups.push(this._current);
-    this._current = g.children;
   }
 
   restore() {
@@ -37,7 +29,6 @@ class C2S {
     this.lineJoin=s.lj; this.globalCompositeOperation=s.gco;
     this.shadowBlur=s.sb; this.shadowColor=s.sc;
     this.shadowOffsetX=s.sox; this.shadowOffsetY=s.soy;
-    if(this._groups.length) this._current = this._groups.pop();
   }
 
   _mm(b) {
@@ -62,15 +53,10 @@ class C2S {
            Math.abs(m[3]-1)<1e-4 && Math.abs(m[4])<0.01 && Math.abs(m[5])<0.01;
   }
 
-  _mstr() {
+  _tattr() {
     if(this._isIdentity()) return '';
     const m=this._matrix;
-    return `matrix(${m[0].toFixed(4)},${m[1].toFixed(4)},${m[2].toFixed(4)},${m[3].toFixed(4)},${m[4].toFixed(2)},${m[5].toFixed(2)})`;
-  }
-
-  _tattr() {
-    const t = this._mstr();
-    return t ? ` transform="${t}"` : '';
+    return ` transform="matrix(${m[0].toFixed(6)},${m[1].toFixed(6)},${m[2].toFixed(6)},${m[3].toFixed(6)},${m[4].toFixed(2)},${m[5].toFixed(2)})"`;
   }
 
   beginPath() { this._path = []; }
@@ -138,28 +124,26 @@ class C2S {
     return String(c);
   }
 
-  _oattr(alpha) {
-    return (alpha < 0.999) ? ` opacity="${alpha.toFixed(3)}"` : '';
-  }
+  _oattr(a) { return a < 0.999 ? ` opacity="${a.toFixed(3)}"` : ''; }
 
   fill() {
     if(!this._path.length) return;
     const d = this._path.join(' ');
-    this._current.push(`<path d="${d}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)}${this._tattr()} fill-rule="evenodd"/>`);
+    this._els.push(`<path d="${d}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)}${this._tattr()} fill-rule="evenodd"/>`);
   }
 
   stroke() {
     if(!this._path.length) return;
     const d = this._path.join(' ');
-    this._current.push(`<path d="${d}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth.toFixed(2)}"${this._oattr(this.globalAlpha)} stroke-linecap="${this.lineCap}" stroke-linejoin="${this.lineJoin}"${this._tattr()}/>`);
+    this._els.push(`<path d="${d}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth.toFixed(2)}"${this._oattr(this.globalAlpha)} stroke-linecap="${this.lineCap}" stroke-linejoin="${this.lineJoin}"${this._tattr()}/>`);
   }
 
   fillRect(x,y,w,h) {
-    this._current.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)}${this._tattr()}/>`);
+    this._els.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)}${this._tattr()}/>`);
   }
 
   strokeRect(x,y,w,h) {
-    this._current.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this._oattr(this.globalAlpha)}${this._tattr()}/>`);
+    this._els.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this._oattr(this.globalAlpha)}${this._tattr()}/>`);
   }
 
   clearRect() {}
@@ -175,7 +159,7 @@ class C2S {
     const dy = {top:'0.8em',hanging:'0.7em',middle:'0.35em',alphabetic:'0',ideographic:'-0.2em',bottom:'-0.2em'}[this.textBaseline]||'0';
     const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const pf = this._parseFont(this.font);
-    this._current.push(`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)} font-family="${pf.family}" font-size="${pf.size}" text-anchor="${anchor}" dy="${dy}"${this._tattr()}>${esc}</text>`);
+    this._els.push(`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" fill="${this._resolveColor(this.fillStyle)}"${this._oattr(this.globalAlpha)} font-family="${pf.family}" font-size="${pf.size}" text-anchor="${anchor}" dy="${dy}"${this._tattr()}>${esc}</text>`);
   }
 
   strokeText(text,x,y) {
@@ -183,7 +167,7 @@ class C2S {
     const dy = {top:'0.8em',hanging:'0.7em',middle:'0.35em',alphabetic:'0',ideographic:'-0.2em',bottom:'-0.2em'}[this.textBaseline]||'0';
     const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const pf = this._parseFont(this.font);
-    this._current.push(`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this._oattr(this.globalAlpha)} font-family="${pf.family}" font-size="${pf.size}" text-anchor="${anchor}" dy="${dy}"${this._tattr()}>${esc}</text>`);
+    this._els.push(`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" fill="none" stroke="${this._resolveColor(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this._oattr(this.globalAlpha)} font-family="${pf.family}" font-size="${pf.size}" text-anchor="${anchor}" dy="${dy}"${this._tattr()}>${esc}</text>`);
   }
 
   measureText(t) { const fs=parseFloat(this.font)||10; return {width:t.length*fs*0.6}; }
@@ -198,26 +182,9 @@ class C2S {
   getImageData() { return {data:new Uint8ClampedArray(4)}; }
   putImageData() {}
 
-  _renderTree(nodes) {
-    const out = [];
-    for(const n of nodes) {
-      if(typeof n === 'string') { out.push(n); continue; }
-      if(!n.children.length) continue;
-      if(n.attrs) {
-        out.push(`<g transform="${n.attrs}">`);
-        out.push(...this._renderTree(n.children));
-        out.push('</g>');
-      } else {
-        out.push(...this._renderTree(n.children));
-      }
-    }
-    return out;
-  }
-
   toSVG() {
     const defs = this._defs.length ? `<defs>\n${this._defs.join('\n')}\n</defs>\n` : '';
-    const body = this._renderTree(this._root).join('\n');
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">\n${defs}${body}\n</svg>`;
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">\n${defs}${this._els.join('\n')}\n</svg>`;
   }
 
   get canvas() { return { width:this.width, height:this.height, toDataURL:()=>'' }; }
