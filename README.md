@@ -5,7 +5,7 @@
 ║            ═══════════════════════════════                    ║
 ║            glitch · spiritual · generator                    ║
 ║                                                              ║
-║                      v 0 . 3                                 ║
+║                      v 0 . 2                                 ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -203,7 +203,7 @@ MAJOR.MINOR.PATCH
   └────────────── breaking changes, architectural shifts
 ```
 
-### Current Version: `0.3.0`
+### Current Version: `0.2.0`
 
 The `0.x` series is the **initial development phase**. The public API (parameter structure,
 export formats, engine interface) is not yet stabilized. Expect changes between minor
@@ -214,27 +214,23 @@ versions during this phase.
 | Version | Milestone |
 |---|---|
 | **0.1** | ✅ Core engine: geometry, traditions, glitch, export (PNG/GIF/WebM), ASCII mode, sacred objects, mantras. |
-| **0.2** | ✅ Unified animation modes. JSON import/export. SVG vector export. Fullscreen fix. |
-| **0.3** | ✅ VR mode (Three.js + WebXR). Global mandala counter. Integrated 3D view. **← you are here** |
-| **0.4** | Audio reactivity (Web Audio API). Beat-synced animation and glitch triggers. |
-| **0.5** | Preset save/load system. Parameter sharing via URL hash. |
-| **0.6** | Community preset gallery. Undo/redo history. |
+| **0.2** | ✅ VR mode, SVG/JSON export, unified animation, global counter. **← you are here** |
+| **0.3** | Audio reactivity (Web Audio API). Beat-synced animation and glitch triggers. |
+| **0.4** | Preset save/load system. Parameter sharing via URL hash. |
+| **0.5** | Community preset gallery. Undo/redo history. |
 | **1.0** | Stable API. Documentation. Plugin architecture for custom shape and effect modules. |
 
 ### Changelog
 
-#### v0.3.0 — VR Mode & Integrated 3D
+#### v0.2.0 — VR Mode, Export Overhaul & Play Mode
 
 - VR mode integrated into main page (Three.js + WebXR)
 - 8-layer depth decomposition with breathing animation and per-layer rotation
 - OrbitControls for 3D navigation (mouse/touch/VR headset)
-- VR toggle button moved to top-right header (next to About)
+- VR toggle button in top-right header (next to About)
 - All controls remain active during VR — params update 3D scene in real time
 - `V` keyboard shortcut for VR toggle
 - Global mandala counter (server-side, shared across all users)
-
-#### v0.2.0 — Export Overhaul & Play Mode
-
 - Unified Animate/Play mode selector (dropdown + single START/STOP button)
 - Tabbed export modal: PNG, SVG, GIF, JSON
 - SVG vector export via custom Canvas-to-SVG renderer (C2S)
