@@ -5,7 +5,7 @@
 ║            ═══════════════════════════════                    ║
 ║            glitch · spiritual · generator                    ║
 ║                                                              ║
-║                      v 0 . 1                                 ║
+║                      v 0 . 3                                 ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -90,9 +90,21 @@ Real-time pixel-level effects applied via a second canvas layer:
 - **Edge detection** (Sobel operator) and **threshold** filters applied pre-fragmentation
 - Mirror modes: None, Alternate, All
 
-### Animation
+### Animation & Playback
+- **Unified mode selector**: Rotate / Play via dropdown + single START/STOP control
 - **Rotate** — continuous smooth canvas-space rotation with synchronized glitch
+- **Play** — rapid-fire random mandala generation (several per second)
 - **Fly Into** — procedural zoom tunnel with multi-layer parallax, fade-in/out lifecycle, and auto-respawning layers
+- **Video Recording** — capture canvas output as WebM via MediaRecorder API (REC button)
+
+### VR Mode
+Integrated 3D visualization powered by Three.js:
+- **Layered depth** — mandala is split into 8 concentric ring layers rendered on separate planes in 3D space
+- **Orbital camera** — rotate, zoom, pan with mouse/touch (OrbitControls)
+- **Auto-rotate** — continuous gentle orbit with breathing layer animation
+- **WebXR support** — enter immersive VR on compatible headsets
+- **Live sync** — all panel controls (tradition, palette, geometry, glitch) update the 3D scene in real time
+- Toggle via `◉` button (top-right) or `V` key
 
 ### ASCII Mode
 Real-time brightness-mapped ASCII art overlay. The entire 800x800 canvas is sampled
@@ -100,12 +112,21 @@ into a 120-column character grid using an 11-step luminance ramp (` .·:;+*%#@�
 Auto-scales font size to fill the canvas frame at any viewport dimension.
 
 ### Export
-- **PNG** at 5 resolutions: 800px, 1024px, 2K, 4K, 4096px — rendered via offscreen canvas with full glitch pipeline
+Tabbed export modal with four format options:
+- **PNG** at 5 resolutions: 800px, 1024px, 2K, 4K — rendered via offscreen canvas with full glitch pipeline
+- **SVG** — vector export via custom Canvas-to-SVG renderer (C2S), resolution-independent
 - **GIF** — custom LZW encoder with median-cut 256-color quantization, configurable duration / FPS / rotation speed
-- **WebM** — MediaRecorder-based video capture with VP9 codec at 5 Mbps
+- **JSON** — full mandala configuration (seed, params, tradition, palette, objects, mantras) for sharing and archiving
+- **WebM** — MediaRecorder-based video capture with VP9 codec at 5 Mbps (via REC button)
+
+### Import
+Load previously exported JSON configurations to recreate any mandala with exact parameters.
 
 ### Custom Text
 Arbitrary text rendered along any ring of the mandala with configurable font size and placement.
+
+### Global Counter
+Live mandala generation counter shared across all users, displayed in the footer. Powered by a lightweight Node.js backend with file-based persistence.
 
 ### Keyboard Shortcuts
 | Key | Action |
@@ -114,6 +135,7 @@ Arbitrary text rendered along any ring of the mandala with configurable font siz
 | `R` | Full random parameters |
 | `E` | Export dialog |
 | `A` | Toggle ASCII overlay |
+| `V` | Toggle VR mode |
 | `F` | Fullscreen |
 | `Space` | Start/stop animation |
 | `Esc` | Close modals |
@@ -125,13 +147,14 @@ Arbitrary text rendered along any ring of the mandala with configurable font siz
 | Layer | Technology |
 |---|---|
 | Rendering | HTML5 Canvas 2D API (dual-canvas architecture) |
+| 3D / VR | Three.js + OrbitControls + WebXR API |
+| SVG export | Custom Canvas-to-SVG renderer (C2S) |
 | Glitch pipeline | Raw `ImageData` pixel manipulation |
 | GIF encoder | Custom LZW compressor with in-browser quantization |
 | Video export | MediaRecorder API (VP9/WebM) |
+| Counter backend | Node.js HTTP server + pm2, file-based storage |
 | UI | Vanilla HTML/CSS/JS, JetBrains Mono font |
 | Dev dependency | Puppeteer (screenshot automation only) |
-
-**Zero runtime dependencies.** Total payload: ~50 KB (uncompressed JS + CSS + HTML).
 
 ---
 
@@ -157,7 +180,11 @@ META_MANDALA/
 ├── engine.js               — MandalaEngine: geometry, palettes, traditions, sacred objects, mantras
 ├── glitch.js               — GlitchEngine: RGB shift, noise, scanlines, distortion, pixelate, flicker
 ├── gif.js                  — GIFEncoder (LZW) + VideoExporter (MediaRecorder)
+├── c2s.js                  — Canvas-to-SVG renderer for vector export
+├── vr-mode.js              — Three.js 3D/VR layer (ES module)
 ├── app.js                  — event wiring, animation loops, export orchestration
+├── server/
+│   └── counter.js          — Global mandala counter API (Node.js)
 ├── capture-screenshots.js  — Puppeteer automation for README screenshots
 ├── screenshots/            — pre-rendered screenshots for documentation
 └── package.json            — dev dependencies (puppeteer)
@@ -176,7 +203,7 @@ MAJOR.MINOR.PATCH
   └────────────── breaking changes, architectural shifts
 ```
 
-### Current Version: `0.1.0`
+### Current Version: `0.3.0`
 
 The `0.x` series is the **initial development phase**. The public API (parameter structure,
 export formats, engine interface) is not yet stabilized. Expect changes between minor
@@ -186,14 +213,38 @@ versions during this phase.
 
 | Version | Milestone |
 |---|---|
-| **0.1** | Core engine: geometry, traditions, glitch, export (PNG/GIF/WebM), ASCII mode, sacred objects, mantras. **← you are here** |
-| **0.2** | Preset save/load system. Undo/redo history. Parameter sharing via URL hash. |
-| **0.3** | Audio reactivity (Web Audio API). Beat-synced animation and glitch triggers. |
-| **0.4** | SVG export. Layer compositing with independent transforms per ring. |
-| **0.5** | Community preset gallery. Import/export JSON configurations. |
+| **0.1** | ✅ Core engine: geometry, traditions, glitch, export (PNG/GIF/WebM), ASCII mode, sacred objects, mantras. |
+| **0.2** | ✅ Unified animation modes. JSON import/export. SVG vector export. Fullscreen fix. |
+| **0.3** | ✅ VR mode (Three.js + WebXR). Global mandala counter. Integrated 3D view. **← you are here** |
+| **0.4** | Audio reactivity (Web Audio API). Beat-synced animation and glitch triggers. |
+| **0.5** | Preset save/load system. Parameter sharing via URL hash. |
+| **0.6** | Community preset gallery. Undo/redo history. |
 | **1.0** | Stable API. Documentation. Plugin architecture for custom shape and effect modules. |
 
 ### Changelog
+
+#### v0.3.0 — VR Mode & Integrated 3D
+
+- VR mode integrated into main page (Three.js + WebXR)
+- 8-layer depth decomposition with breathing animation and per-layer rotation
+- OrbitControls for 3D navigation (mouse/touch/VR headset)
+- VR toggle button moved to top-right header (next to About)
+- All controls remain active during VR — params update 3D scene in real time
+- `V` keyboard shortcut for VR toggle
+- Global mandala counter (server-side, shared across all users)
+
+#### v0.2.0 — Export Overhaul & Play Mode
+
+- Unified Animate/Play mode selector (dropdown + single START/STOP button)
+- Tabbed export modal: PNG, SVG, GIF, JSON
+- SVG vector export via custom Canvas-to-SVG renderer (C2S)
+- JSON export/import for mandala configurations
+- Video recording via REC button (MediaRecorder/WebM)
+- Proportional fullscreen display (aspect ratio preserved)
+- Hi-res export scale-factor fix (consistent rendering at all resolutions)
+- Custom text reads left-to-right clockwise
+- Consolidated 4K export option
+- "initiated by G3OSHA" in About panel
 
 #### v0.1.0 — Initial Release
 
