@@ -462,7 +462,9 @@ document.addEventListener('DOMContentLoaded', () => {
     prog.classList.remove('hidden'); fill.style.width='10%'; txt.textContent=`Rendering ${size}×${size}...`;
     requestAnimationFrame(()=>{
       const ec=document.createElement('canvas'); ec.width=size; ec.height=size;
+      engine._noBg = true;
       engine.renderToCanvas(ec, currentSeed);
+      engine._noBg = false;
       fill.style.width='60%';
       if (glitch.hasActiveEffects()) {
         const gc=document.createElement('canvas'); gc.width=size; gc.height=size;

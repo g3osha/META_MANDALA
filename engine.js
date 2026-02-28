@@ -136,11 +136,13 @@ class MandalaEngine {
 
     // Background (absolute coordinates, before translate)
     ctx.clearRect(0,0,W,H);
-    const cg=this.params.customGradient;
-    if(cg.enabled && cg.bgType!=='flat'){
-      this._bgGradient(ctx,pal,r,cx,cy,W,H);
-    } else {
-      ctx.fillStyle=pal.bg; ctx.fillRect(0,0,W,H);
+    if(!this._noBg){
+      const cg=this.params.customGradient;
+      if(cg.enabled && cg.bgType!=='flat'){
+        this._bgGradient(ctx,pal,r,cx,cy,W,H);
+      } else {
+        ctx.fillStyle=pal.bg; ctx.fillRect(0,0,W,H);
+      }
     }
 
     // Everything below is centered at (0,0)
