@@ -173,6 +173,7 @@
           <button class="action-btn" id="btnAscii" title="ASCII mode [A]">▣ ASCII</button>
           <button class="action-btn" id="btnRandom" title="[R]">⚡ RANDOM</button>
           <button class="action-btn" id="btnRecord" title="Record video">⏺ REC</button>
+          <a class="action-btn" href="vr.html" title="VR Mode" style="text-decoration:none">◉ VR</a>
           <input type="file" id="importFile" accept=".json" hidden>
         </div>
       </div>
@@ -277,6 +278,7 @@
  ☸ all phenomena are empty ☸ gate gate paragate bodhi svaha ☸
 ───────────────────────────────────────────────────────
     </pre>
+    <div class="mandala-counter" id="mandalaCounter">mandalas generated: <span id="counterValue">0</span></div>
   </footer>
 
 </div>
@@ -287,6 +289,7 @@
     <h3 class="section-title" style="margin-bottom:16px">⬡ EXPORT</h3>
     <div class="export-format-tabs">
       <button class="export-fmt-btn active" data-fmt="png">PNG</button>
+      <button class="export-fmt-btn" data-fmt="svg">SVG</button>
       <button class="export-fmt-btn" data-fmt="gif">GIF</button>
       <button class="export-fmt-btn" data-fmt="json">JSON</button>
     </div>
@@ -315,6 +318,14 @@
         <label class="control-row"><span class="label-text">Speed</span><input type="range" id="gifSpeed" min="1" max="10" value="3"><span class="val" id="gifSpeedVal">3</span></label>
       </div>
     </div>
+    <div id="exportSvgOpts" class="hidden">
+      <div class="export-options">
+        <button class="export-res-btn svg-res-btn" data-w="800">800px</button>
+        <button class="export-res-btn svg-res-btn active" data-w="2048">2K</button>
+        <button class="export-res-btn svg-res-btn" data-w="4096">4K</button>
+      </div>
+      <p style="font-size:9px;color:var(--text-dim);line-height:1.5;margin:4px 0">Vector export. Gradients and text are preserved as SVG elements.</p>
+    </div>
     <div id="exportJsonOpts" class="hidden">
       <p style="font-size:9px;color:var(--text-dim);line-height:1.5;margin:8px 0">Export all mandala parameters, glitch settings and color correction as a JSON file. Use Import to restore.</p>
     </div>
@@ -332,6 +343,7 @@
 <script src="engine.js"></script>
 <script src="glitch.js"></script>
 <script src="gif.js"></script>
+<script src="c2s.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

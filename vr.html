@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☸ META MANDALA — VR</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☸</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --bg2:#111118; --border:#2a2a4a;
+  --text:#c8c8e0; --text-dim:#6a6a8a;
+  --accent:#9b59b6; --accent2:#e6a800; --accent3:#6b2fa0;
+  --glow:#9b59b644; --radius:4px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;overflow:hidden;height:100vh}
+#vrCanvas{display:block;width:100vw;height:100vh}
+.vr-ui{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;justify-content:center;align-items:center;gap:8px;padding:14px;background:linear-gradient(transparent,rgba(10,10,15,0.9) 40%)}
+.vr-btn{background:rgba(26,26,46,0.8);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:10px;letter-spacing:1.5px;padding:8px 16px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(8px)}
+.vr-btn:hover{border-color:var(--accent);background:var(--accent3);color:#fff;box-shadow:0 0 20px var(--glow)}
+.vr-btn.active{border-color:var(--accent2);color:var(--accent2)}
+.vr-header{position:fixed;top:0;left:0;right:0;z-index:100;text-align:center;padding:12px;background:linear-gradient(rgba(10,10,15,0.9) 60%,transparent);pointer-events:none}
+.vr-title{font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase}
+.vr-sub{font-size:8px;color:var(--text-dim);letter-spacing:2px;margin-top:2px}
+.vr-select{background:rgba(26,26,46,0.8);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:9px;padding:6px 8px;cursor:pointer;backdrop-filter:blur(8px);letter-spacing:0.5px}
+.vr-select:focus{border-color:var(--accent);outline:none}
+#vrButton{display:none}
+.vr-enter{background:rgba(107,47,160,0.4)!important;border-color:var(--accent)!important}
+</style>
+</head>
+<body>
+
+<div class="vr-header">
+  <div class="vr-title">☸ META MANDALA — VR</div>
+  <div class="vr-sub">layered sacred geometry in 3D space</div>
+</div>
+
+<canvas id="vrCanvas"></canvas>
+
+<div class="vr-ui">
+  <a class="vr-btn" href="index.html">← EDITOR</a>
+  <select id="vrTradition" class="vr-select">
+    <option value="vajrayana">Vajrayana</option>
+    <option value="theravada">Theravada</option>
+    <option value="zen">Zen</option>
+    <option value="tibetan">Tibetan</option>
+    <option value="shingon">Shingon</option>
+    <option value="fractal">Fractal</option>
+  </select>
+  <select id="vrPalette" class="vr-select">
+    <option value="samsara">Samsara</option>
+    <option value="void">Void</option>
+    <option value="lotus">Lotus</option>
+    <option value="dharma">Dharma</option>
+    <option value="fire">Fire</option>
+    <option value="ice">Ice</option>
+  </select>
+  <button class="vr-btn" id="vrRandom">⚡ RANDOM</button>
+  <button class="vr-btn" id="vrAutoRotate">◎ AUTO</button>
+  <button class="vr-btn vr-enter" id="vrEnter" style="display:none">◉ ENTER VR</button>
+</div>
+
+<script src="engine.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const LAYER_COUNT = 8;
+const LAYER_SIZE = 1024;
+const LAYER_SPREAD = 0.7;
+const PLANE_SIZE = 4;
+
+const canvas = document.getElementById('vrCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0f);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 6);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 1;
+controls.maxDistance = 15;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+const ambientLight = new THREE.AmbientLight(0x9b59b6, 0.15);
+scene.add(ambientLight);
+
+const offscreen = document.createElement('canvas');
+offscreen.width = offscreen.height = LAYER_SIZE;
+const engine = new MandalaEngine(offscreen);
+let seed = Math.random() * 99999;
+
+const layerMeshes = [];
+
+function extractLayers() {
+  engine.generate(seed);
+  const full = offscreen;
+  const cx = LAYER_SIZE / 2, cy = LAYER_SIZE / 2;
+  const maxR = Math.min(cx, cy) * 0.95;
+  const layers = [];
+
+  for (let i = 0; i < LAYER_COUNT; i++) {
+    const innerR = i === 0 ? 0 : (i / LAYER_COUNT) * maxR;
+    const outerR = ((i + 1) / LAYER_COUNT) * maxR;
+    const c = document.createElement('canvas');
+    c.width = c.height = LAYER_SIZE;
+    const ctx = c.getContext('2d');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    if (i > 0) { ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true); }
+    ctx.clip();
+    ctx.drawImage(full, 0, 0);
+    layers.push(c);
+  }
+  return layers;
+}
+
+function buildScene(layers) {
+  layerMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  layerMeshes.length = 0;
+
+  layers.forEach((cvs, i) => {
+    const tex = new THREE.CanvasTexture(cvs);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex, transparent: true, side: THREE.DoubleSide,
+      depthWrite: false, blending: THREE.NormalBlending
+    });
+    const geo = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.z = -(LAYER_COUNT - 1 - i) * LAYER_SPREAD;
+    mesh.userData.baseZ = mesh.position.z;
+    mesh.userData.rotSpeed = 0.0003 * (i + 1);
+    mesh.userData.breathPhase = i * 0.7;
+    layerMeshes.push(mesh);
+    scene.add(mesh);
+  });
+
+  const bgGeo = new THREE.PlaneGeometry(PLANE_SIZE * 2.5, PLANE_SIZE * 2.5);
+  const pal = engine.getPalette();
+  const bgMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(pal.bg), side: THREE.DoubleSide });
+  const bgMesh = new THREE.Mesh(bgGeo, bgMat);
+  bgMesh.position.z = -(LAYER_COUNT) * LAYER_SPREAD - 0.5;
+  bgMesh.userData.rotSpeed = 0;
+  bgMesh.userData.breathPhase = 0;
+  bgMesh.userData.baseZ = bgMesh.position.z;
+  layerMeshes.push(bgMesh);
+  scene.add(bgMesh);
+}
+
+function regenerate() {
+  seed = Math.random() * 99999;
+  rebuild();
+}
+
+function rebuild() {
+  const layers = extractLayers();
+  buildScene(layers);
+}
+
+function randomize() {
+  seed = Math.random() * 99999;
+  const trads = ['vajrayana','theravada','zen','tibetan','shingon','fractal'];
+  const pals = Object.keys(PALETTES);
+  engine.setTradition(trads[Math.floor(Math.random()*trads.length)]);
+  engine.setParam('palette', pals[Math.floor(Math.random()*pals.length)]);
+  engine.setParam('rings', 2+Math.floor(Math.random()*10));
+  engine.setParam('petals', 3+Math.floor(Math.random()*29));
+  engine.setParam('symmetry', 1+Math.floor(Math.random()*23));
+  engine.setParam('complexity', 1+Math.floor(Math.random()*10));
+  engine.setParam('scale', 50+Math.floor(Math.random()*50));
+  engine.setParam('lineWidth', 0.3+Math.random()*3);
+  engine.setParam('fractalDepth', Math.random()>0.6 ? Math.floor(Math.random()*5) : 0);
+  engine.setParam('strokeOnly', Math.random()>0.7);
+  engine.setParam('filledMode', Math.random()>0.5);
+  const all=['circle','square','triangle','lotus','diamond','star'], shapes=new Set();
+  shapes.add(all[Math.floor(Math.random()*all.length)]);
+  all.forEach(s=>{ if(Math.random()>0.5) shapes.add(s); });
+  engine.params.shapes = shapes;
+  const objs = Object.keys(SACRED_OBJECTS).filter(k=>k!=='none');
+  if (Math.random()>0.5) {
+    engine.params.objects.type = objs[Math.floor(Math.random()*objs.length)];
+    engine.params.objects.count = 1+Math.floor(Math.random()*6);
+    engine.params.objects.size = 10+Math.floor(Math.random()*40);
+    engine.params.objects.ring = Math.floor(Math.random()*6);
+    engine.params.objects.style = ['stroke','fill','glow'][Math.floor(Math.random()*3)];
+  } else { engine.params.objects.type = 'none'; }
+
+  document.getElementById('vrTradition').value = engine.params.tradition;
+  document.getElementById('vrPalette').value = engine.params.palette;
+  rebuild();
+}
+
+let time = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  time += 0.016;
+  controls.update();
+
+  layerMeshes.forEach(m => {
+    if (m.userData.rotSpeed) m.rotation.z += m.userData.rotSpeed;
+    if (m.userData.breathPhase !== undefined) {
+      const breath = Math.sin(time * 0.5 + m.userData.breathPhase) * 0.08;
+      m.position.z = m.userData.baseZ + breath;
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+document.getElementById('vrRandom').addEventListener('click', randomize);
+document.getElementById('vrAutoRotate').addEventListener('click', function() {
+  controls.autoRotate = !controls.autoRotate;
+  this.classList.toggle('active', controls.autoRotate);
+});
+document.getElementById('vrTradition').addEventListener('change', function() {
+  engine.setTradition(this.value); rebuild();
+});
+document.getElementById('vrPalette').addEventListener('change', function() {
+  engine.setParam('palette', this.value); rebuild();
+});
+
+if ('xr' in navigator) {
+  navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+    if (supported) {
+      const btn = document.getElementById('vrEnter');
+      btn.style.display = '';
+      renderer.xr.enabled = true;
+      let vrSession = null;
+      btn.addEventListener('click', async () => {
+        if (vrSession) { vrSession.end(); return; }
+        vrSession = await navigator.xr.requestSession('immersive-vr', { optionalFeatures:['local-floor'] });
+        renderer.xr.setSession(vrSession);
+        btn.textContent = '◉ EXIT VR'; btn.classList.add('active');
+        vrSession.addEventListener('end', () => { vrSession=null; btn.textContent='◉ ENTER VR'; btn.classList.remove('active'); });
+      });
+      renderer.setAnimationLoop(() => {
+        time += 0.016;
+        controls.update();
+        layerMeshes.forEach(m => {
+          if(m.userData.rotSpeed) m.rotation.z += m.userData.rotSpeed;
+          if(m.userData.breathPhase !== undefined) m.position.z = m.userData.baseZ + Math.sin(time*0.5+m.userData.breathPhase)*0.08;
+        });
+        renderer.render(scene, camera);
+      });
+    } else { animate(); }
+  }).catch(() => animate());
+} else { animate(); }
+
+document.getElementById('vrAutoRotate').classList.add('active');
+randomize();
+</script>
+</body>
+</html>

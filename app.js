@@ -10,13 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
   let isFlyingInto = false, flyFrame = null, flyTime = 0;
   let asciiMode = false;
   let selectedExportRes = 2048;
+  let selectedSvgRes = 2048;
   let currentExportFmt = 'png';
   const ASCII_COLS = 120;
+
+  const counterEl = document.getElementById('counterValue');
+  let lastLogTime = 0;
+
+  fetch('/api/count').then(r=>r.json()).then(d=>{ counterEl.textContent = (d.count||0).toLocaleString(); }).catch(()=>{});
 
   function generate() {
     engine.generate(currentSeed);
     glitch.apply();
     if (asciiMode) updateAscii();
+    const now = Date.now();
+    if (now - lastLogTime > 800) {
+      lastLogTime = now;
+      fetch('/api/count',{method:'POST'}).then(r=>r.json()).then(d=>{ counterEl.textContent = (d.count||0).toLocaleString(); }).catch(()=>{});
+    }
   }
 
   function updateAscii() {
@@ -413,19 +424,27 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       currentExportFmt = btn.dataset.fmt;
       document.getElementById('exportPngOpts').classList.toggle('hidden', currentExportFmt !== 'png');
+      document.getElementById('exportSvgOpts').classList.toggle('hidden', currentExportFmt !== 'svg');
       document.getElementById('exportGifOpts').classList.toggle('hidden', currentExportFmt !== 'gif');
       document.getElementById('exportJsonOpts').classList.toggle('hidden', currentExportFmt !== 'json');
       const dlBtn = document.getElementById('btnExportConfirm');
       if (currentExportFmt === 'png') dlBtn.innerHTML = '⬡ DOWNLOAD';
+      else if (currentExportFmt === 'svg') dlBtn.innerHTML = '⬡ DOWNLOAD SVG';
       else if (currentExportFmt === 'gif') dlBtn.innerHTML = '⟐ RENDER';
       else dlBtn.innerHTML = '⬡ EXPORT JSON';
     });
   });
 
-  document.querySelectorAll('.export-res-btn').forEach(btn=>{
+  document.querySelectorAll('.export-res-btn:not(.svg-res-btn)').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.export-res-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.export-res-btn:not(.svg-res-btn)').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active'); selectedExportRes=parseInt(btn.dataset.w);
+    });
+  });
+  document.querySelectorAll('.svg-res-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.svg-res-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active'); selectedSvgRes=parseInt(btn.dataset.w);
     });
   });
 
@@ -433,6 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btnExportConfirm').addEventListener('click', () => {
     if (currentExportFmt === 'png') exportHiRes(selectedExportRes);
+    else if (currentExportFmt === 'svg') exportSVG(selectedSvgRes);
     else if (currentExportFmt === 'gif') exportGifFromModal();
     else exportJSON();
   });
@@ -455,6 +475,26 @@ document.addEventListener('DOMContentLoaded', () => {
         link.href=ec.toDataURL('image/png'); link.click();
         fill.style.width='100%'; txt.textContent='Done!';
         setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); }, 600);
+      });
+    });
+  }
+
+  function exportSVG(size) {
+    const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
+    prog.classList.remove('hidden'); fill.style.width='20%'; txt.textContent=`Rendering SVG ${size}×${size}...`;
+    requestAnimationFrame(()=>{
+      const svgCtx = new C2S(size, size);
+      const mockCanvas = { width:size, height:size, getContext:()=>svgCtx };
+      engine.renderToCanvas(mockCanvas, currentSeed);
+      fill.style.width='80%'; txt.textContent='Encoding SVG...';
+      requestAnimationFrame(()=>{
+        const svgStr = svgCtx.toSVG();
+        const blob = new Blob([svgStr], {type:'image/svg+xml'});
+        const link = document.createElement('a');
+        link.download = `meta-mandala-${size}px-${Date.now()}.svg`;
+        link.href = URL.createObjectURL(blob); link.click();
+        fill.style.width='100%'; txt.textContent='Done!';
+        setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
       });
     });
   }
