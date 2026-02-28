@@ -11,7 +11,10 @@
 <div id="scanline-overlay"></div>
 <div id="app">
 
-  <div class="about-toggle" id="aboutToggle" title="About">?</div>
+  <div class="top-toggles">
+    <div class="about-toggle" id="vrToggle" title="VR Mode [V]">◉</div>
+    <div class="about-toggle" id="aboutToggle" title="About">?</div>
+  </div>
   <div class="about-panel hidden" id="aboutPanel">
     <button class="about-close" id="aboutClose">&times;</button>
     <h3 class="about-title">&#9784; META MANDALA</h3>
@@ -152,6 +155,7 @@
         <div class="canvas-frame" id="canvasFrame">
           <canvas id="mandalaCanvas" width="800" height="800"></canvas>
           <canvas id="glitchCanvas" width="800" height="800"></canvas>
+          <canvas id="vrCanvas" class="hidden" width="800" height="800"></canvas>
           <pre class="ascii-overlay hidden" id="asciiOverlay"></pre>
           <button class="fullscreen-btn" id="btnFullscreen" title="Fullscreen [F]">⛶</button>
           <div class="canvas-corner tl">╔</div>
@@ -173,7 +177,6 @@
           <button class="action-btn" id="btnAscii" title="ASCII mode [A]">▣ ASCII</button>
           <button class="action-btn" id="btnRandom" title="[R]">⚡ RANDOM</button>
           <button class="action-btn" id="btnRecord" title="Record video">⏺ REC</button>
-          <a class="action-btn" href="vr.html" title="VR Mode" style="text-decoration:none">◉ VR</a>
           <input type="file" id="importFile" accept=".json" hidden>
         </div>
       </div>
@@ -345,5 +348,9 @@
 <script src="gif.js"></script>
 <script src="c2s.js"></script>
 <script src="app.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+</script>
+<script type="module" src="vr-mode.js"></script>
 </body>
 </html>

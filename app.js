@@ -738,6 +738,35 @@ document.addEventListener('DOMContentLoaded', () => {
       aboutPanel.classList.add('hidden');
   });
 
+  // ═══ VR MODE TOGGLE ═══
+  let vrActive = false;
+  const vrToggle = document.getElementById('vrToggle');
+  vrToggle.addEventListener('click', () => {
+    vrActive = !vrActive;
+    vrToggle.classList.toggle('vr-active', vrActive);
+    mandalaCanvas.classList.toggle('hidden', vrActive);
+    glitchCanvas.classList.toggle('hidden', vrActive);
+    document.getElementById('vrCanvas').classList.toggle('hidden', !vrActive);
+    if (vrActive) {
+      window.dispatchEvent(new CustomEvent('vr-enable'));
+    } else {
+      window.dispatchEvent(new CustomEvent('vr-disable'));
+    }
+  });
+
+  window._mandala = {
+    engine, glitch,
+    getSeed: () => currentSeed,
+    isVR: () => vrActive,
+    rebuild: () => window.dispatchEvent(new CustomEvent('vr-rebuild'))
+  };
+
+  const _origGenerate = generate;
+  generate = function() {
+    _origGenerate();
+    if (vrActive) window.dispatchEvent(new CustomEvent('vr-rebuild'));
+  };
+
   // ═══ KEYBOARD ═══
   document.addEventListener('keydown', e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
@@ -747,9 +776,9 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'e': document.getElementById('btnExport').click(); break;
       case 'f': document.getElementById('btnFullscreen').click(); break;
       case 'a': document.getElementById('btnAscii').click(); break;
+      case 'v': vrToggle.click(); break;
       case ' ': e.preventDefault(); btnAnimate.click(); break;
-      case 'escape':
-        document.getElementById('exportModal').classList.add('hidden'); break;
+      case 'escape': document.getElementById('exportModal').classList.add('hidden'); break;
     }
   });
 
