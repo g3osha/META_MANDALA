@@ -234,11 +234,16 @@ function rebuild() {
 }
 
 async function enable() {
-  if (!initialized) init();
-  resize();
-  rebuild();
-  await startTracking();
-  if (!animId) animate();
+  try {
+    if (!initialized) init();
+    resize();
+    rebuild();
+    await startTracking();
+    if (!animId) animate();
+    console.log('%c◉ VR mode active — ' + trackingMode + ' tracking', 'color:#e6a800');
+  } catch(e) {
+    console.error('VR mode error:', e);
+  }
 }
 
 function disable() {

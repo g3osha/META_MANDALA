@@ -742,16 +742,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ═══ VR MODE TOGGLE ═══
   let vrActive = false;
+  let vrLoading = false;
   const vrToggle = document.getElementById('vrToggle');
+  const vrCanvas = document.getElementById('vrCanvas');
   vrToggle.addEventListener('click', () => {
+    if (vrLoading) return;
     vrActive = !vrActive;
     vrToggle.classList.toggle('vr-active', vrActive);
-    mandalaCanvas.classList.toggle('hidden', vrActive);
-    glitchCanvas.classList.toggle('hidden', vrActive);
-    document.getElementById('vrCanvas').classList.toggle('hidden', !vrActive);
     if (vrActive) {
+      vrLoading = true;
+      vrToggle.style.opacity = '0.5';
+      mandalaCanvas.style.display = 'none';
+      glitchCanvas.style.display = 'none';
+      vrCanvas.classList.remove('hidden');
+      vrCanvas.style.display = 'block';
       window.dispatchEvent(new CustomEvent('vr-enable'));
+      setTimeout(() => { vrLoading = false; vrToggle.style.opacity = ''; }, 500);
     } else {
+      mandalaCanvas.style.display = '';
+      glitchCanvas.style.display = '';
+      vrCanvas.style.display = 'none';
+      vrCanvas.classList.add('hidden');
       window.dispatchEvent(new CustomEvent('vr-disable'));
     }
   });
