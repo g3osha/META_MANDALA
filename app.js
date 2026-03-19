@@ -752,15 +752,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (vrActive) {
       vrLoading = true;
       vrToggle.style.opacity = '0.5';
-      mandalaCanvas.style.display = 'none';
-      glitchCanvas.style.display = 'none';
+      mandalaCanvas.style.visibility = 'hidden';
+      glitchCanvas.style.visibility = 'hidden';
       vrCanvas.classList.remove('hidden');
       vrCanvas.style.display = 'block';
       window.dispatchEvent(new CustomEvent('vr-enable'));
       setTimeout(() => { vrLoading = false; vrToggle.style.opacity = ''; }, 500);
     } else {
-      mandalaCanvas.style.display = '';
-      glitchCanvas.style.display = '';
+      mandalaCanvas.style.visibility = '';
+      glitchCanvas.style.visibility = '';
       vrCanvas.style.display = 'none';
       vrCanvas.classList.add('hidden');
       window.dispatchEvent(new CustomEvent('vr-disable'));

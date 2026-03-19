@@ -166,7 +166,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:11px;
 .mandala-counter { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:2px; opacity:0.5; margin-top:2px; text-transform:uppercase; }
 
 /* ═══ VR CANVAS ═══ */
-#vrCanvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; background:#0a0a0f; }
+#vrCanvas { position:absolute; top:0; left:0; width:100% !important; height:100% !important; max-width:none !important; max-height:none !important; z-index:5; background:#0a0a0f; }
 #vrCanvas.hidden { display:none !important; }
 
 /* ═══ TOP TOGGLES ═══ */
