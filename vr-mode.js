@@ -1,16 +1,23 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const LAYER_COUNT = 8;
 const LAYER_SIZE = 1024;
-const LAYER_SPREAD = 0.7;
-const PLANE_SIZE = 4;
+const PLANE_SIZE = 4.5;
+const DEPTH_RANGE = 3.5;
+const CAM_Z = 5.5;
+const PARALLAX = 1.8;
+const SMOOTH = 0.06;
 
-let renderer, scene, camera, controls;
+let renderer, scene, camera;
 let layerMeshes = [];
 let time = 0;
 let animId = null;
 let initialized = false;
+
+let videoEl = null, trackCanvas, trackCtx;
+let headX = 0, headY = 0;
+let smoothX = 0, smoothY = 0;
+let trackingMode = 'none';
 
 function init() {
   const canvas = document.getElementById('vrCanvas');
@@ -21,33 +28,105 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0a0f);
 
-  camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
-  camera.position.set(0, 0, 6);
-
-  controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.minDistance = 1;
-  controls.maxDistance = 15;
-  controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.5;
-
-  scene.add(new THREE.AmbientLight(0x9b59b6, 0.15));
-
-  if ('xr' in navigator) {
-    navigator.xr.isSessionSupported('immersive-vr').then(ok => {
-      if (ok) renderer.xr.enabled = true;
-    }).catch(() => {});
-  }
+  camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 0, CAM_Z);
 
   initialized = true;
 }
 
+async function startTracking() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 320, height: 240, facingMode: 'user' }
+    });
+    videoEl = document.createElement('video');
+    videoEl.srcObject = stream;
+    videoEl.setAttribute('playsinline', '');
+    await videoEl.play();
+
+    trackCanvas = document.createElement('canvas');
+    trackCanvas.width = 80;
+    trackCanvas.height = 60;
+    trackCtx = trackCanvas.getContext('2d', { willReadFrequently: true });
+
+    trackingMode = 'camera';
+    showTrackingIndicator(true);
+  } catch (e) {
+    trackingMode = 'mouse';
+    const vrCanvas = document.getElementById('vrCanvas');
+    if (vrCanvas) vrCanvas.addEventListener('mousemove', onMouse);
+    showTrackingIndicator(false);
+  }
+}
+
+function stopTracking() {
+  if (videoEl && videoEl.srcObject) {
+    videoEl.srcObject.getTracks().forEach(t => t.stop());
+    videoEl = null;
+  }
+  if (trackingMode === 'mouse') {
+    const vrCanvas = document.getElementById('vrCanvas');
+    if (vrCanvas) vrCanvas.removeEventListener('mousemove', onMouse);
+  }
+  trackingMode = 'none';
+  headX = headY = smoothX = smoothY = 0;
+  hideTrackingIndicator();
+}
+
+function onMouse(e) {
+  const rect = e.target.getBoundingClientRect();
+  headX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+  headY = -((e.clientY - rect.top) / rect.height - 0.5) * 2;
+}
+
+function detectHead() {
+  if (trackingMode !== 'camera' || !videoEl || videoEl.readyState < 2) return;
+
+  trackCtx.drawImage(videoEl, 0, 0, 80, 60);
+  const d = trackCtx.getImageData(0, 0, 80, 60).data;
+  let sx = 0, sy = 0, cnt = 0;
+
+  for (let y = 0; y < 60; y++) {
+    for (let x = 0; x < 80; x++) {
+      const i = (y * 80 + x) * 4;
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const cb = 128 - 0.169 * r - 0.331 * g + 0.5 * b;
+      const cr = 128 + 0.5 * r - 0.419 * g - 0.081 * b;
+      if (cb > 70 && cb < 135 && cr > 130 && cr < 180) {
+        sx += x; sy += y; cnt++;
+      }
+    }
+  }
+
+  if (cnt > 30) {
+    headX = -((sx / cnt) / 80 - 0.5) * 2;
+    headY = -((sy / cnt) / 60 - 0.5) * 2;
+  }
+}
+
+function showTrackingIndicator(isCamera) {
+  let el = document.getElementById('vrTrackIndicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'vrTrackIndicator';
+    el.style.cssText = 'position:absolute;top:8px;left:8px;z-index:10;font:9px "JetBrains Mono",monospace;letter-spacing:1px;color:var(--text-dim,#6a6a8a);opacity:0.6;pointer-events:none;text-transform:uppercase';
+    document.getElementById('canvasFrame').appendChild(el);
+  }
+  el.textContent = isCamera ? '◉ head tracking' : '◎ mouse tracking';
+  el.style.display = 'block';
+}
+
+function hideTrackingIndicator() {
+  const el = document.getElementById('vrTrackIndicator');
+  if (el) el.style.display = 'none';
+}
+
 function resize() {
   if (!renderer) return;
-  const canvas = renderer.domElement;
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (canvas.width !== w || canvas.height !== h) {
+  const c = renderer.domElement;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (w === 0 || h === 0) return;
+  if (c.width !== w || c.height !== h) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -55,17 +134,17 @@ function resize() {
 }
 
 function extractLayers(engine, seed) {
-  const offscreen = document.createElement('canvas');
-  offscreen.width = offscreen.height = LAYER_SIZE;
-  const offEngine = new MandalaEngine(offscreen);
+  const off = document.createElement('canvas');
+  off.width = off.height = LAYER_SIZE;
+  const eng = new MandalaEngine(off);
 
   Object.keys(engine.params).forEach(k => {
     const v = engine.params[k];
-    if (v instanceof Set) offEngine.params[k] = new Set(v);
-    else if (typeof v === 'object' && v !== null) offEngine.params[k] = { ...v };
-    else offEngine.params[k] = v;
+    if (v instanceof Set) eng.params[k] = new Set(v);
+    else if (typeof v === 'object' && v !== null) eng.params[k] = { ...v };
+    else eng.params[k] = v;
   });
-  offEngine.generate(seed);
+  eng.generate(seed);
 
   const cx = LAYER_SIZE / 2, cy = LAYER_SIZE / 2;
   const maxR = Math.min(cx, cy) * 0.95;
@@ -81,57 +160,68 @@ function extractLayers(engine, seed) {
     ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
     if (i > 0) ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true);
     ctx.clip();
-    ctx.drawImage(offscreen, 0, 0);
+    ctx.drawImage(off, 0, 0);
     layers.push(c);
   }
-  return { layers, palette: offEngine.getPalette() };
+  return { layers, palette: eng.getPalette() };
 }
 
 function buildScene(layers, palette) {
   layerMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
   layerMeshes = [];
 
+  scene.background = new THREE.Color(palette.bg);
+
   layers.forEach((cvs, i) => {
     const tex = new THREE.CanvasTexture(cvs);
     tex.colorSpace = THREE.SRGBColorSpace;
     const mat = new THREE.MeshBasicMaterial({
       map: tex, transparent: true, side: THREE.DoubleSide,
-      depthWrite: false, blending: THREE.NormalBlending
+      depthWrite: false
     });
     const geo = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE);
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.z = -(LAYER_COUNT - 1 - i) * LAYER_SPREAD;
-    mesh.userData.baseZ = mesh.position.z;
-    mesh.userData.rotSpeed = 0.0003 * (i + 1);
-    mesh.userData.breathPhase = i * 0.7;
+    const depth = -((LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1)) * DEPTH_RANGE;
+    mesh.position.z = depth;
+    mesh.userData.baseZ = depth;
+    mesh.userData.breathPhase = i * 0.8;
     layerMeshes.push(mesh);
     scene.add(mesh);
   });
 
-  const bgGeo = new THREE.PlaneGeometry(PLANE_SIZE * 2.5, PLANE_SIZE * 2.5);
+  const bgGeo = new THREE.PlaneGeometry(PLANE_SIZE * 3, PLANE_SIZE * 3);
   const bgMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(palette.bg), side: THREE.DoubleSide });
-  const bgMesh = new THREE.Mesh(bgGeo, bgMat);
-  bgMesh.position.z = -(LAYER_COUNT) * LAYER_SPREAD - 0.5;
-  bgMesh.userData.rotSpeed = 0;
-  bgMesh.userData.breathPhase = 0;
-  bgMesh.userData.baseZ = bgMesh.position.z;
-  layerMeshes.push(bgMesh);
-  scene.add(bgMesh);
+  const bg = new THREE.Mesh(bgGeo, bgMat);
+  bg.position.z = -DEPTH_RANGE - 0.5;
+  bg.userData.baseZ = bg.position.z;
+  bg.userData.breathPhase = 0;
+  layerMeshes.push(bg);
+  scene.add(bg);
 }
 
 function animate() {
   animId = requestAnimationFrame(animate);
   time += 0.016;
-  controls.update();
-  resize();
+
+  detectHead();
+
+  smoothX += (headX - smoothX) * SMOOTH;
+  smoothY += (headY - smoothY) * SMOOTH;
+
+  const cx = smoothX * PARALLAX;
+  const cy = smoothY * PARALLAX;
+  camera.position.x = cx;
+  camera.position.y = cy;
+  camera.position.z = CAM_Z;
+  camera.lookAt(cx, cy, -DEPTH_RANGE * 0.5);
 
   layerMeshes.forEach(m => {
-    if (m.userData.rotSpeed) m.rotation.z += m.userData.rotSpeed;
-    if (m.userData.breathPhase !== undefined) {
-      m.position.z = m.userData.baseZ + Math.sin(time * 0.5 + m.userData.breathPhase) * 0.08;
+    if (m.userData.breathPhase) {
+      m.position.z = m.userData.baseZ + Math.sin(time * 0.4 + m.userData.breathPhase) * 0.04;
     }
   });
 
+  resize();
   renderer.render(scene, camera);
 }
 
@@ -143,17 +233,19 @@ function rebuild() {
   buildScene(layers, palette);
 }
 
-function enable() {
+async function enable() {
   if (!initialized) init();
   resize();
   rebuild();
+  await startTracking();
   if (!animId) animate();
 }
 
 function disable() {
   if (animId) { cancelAnimationFrame(animId); animId = null; }
+  stopTracking();
 }
 
-window.addEventListener('vr-enable', enable);
+window.addEventListener('vr-enable', () => enable());
 window.addEventListener('vr-disable', disable);
 window.addEventListener('vr-rebuild', () => { if (animId) rebuild(); });
