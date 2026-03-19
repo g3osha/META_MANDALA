@@ -1,20 +1,21 @@
 const PALETTES = {
   samsara: { bg:'#0a0a1a', colors:['#6b2fa0','#9b59b6','#e6a800','#f0c040','#c44569','#a29bfe'], stroke:'#e6a80044' },
-  void:    { bg:'#050508', colors:['#1a1a3e','#2a2a5e','#444','#666','#888','#aaa'], stroke:'#ffffff22' },
-  lotus:   { bg:'#1a0a10', colors:['#ff6b9d','#c44569','#f8b500','#e55039','#ff9ff3','#feca57'], stroke:'#ff6b9d44' },
-  dharma:  { bg:'#0a1a10', colors:['#00b894','#006266','#f6e58d','#badc58','#6ab04c','#c7ecee'], stroke:'#00b89444' },
   fire:    { bg:'#1a0a05', colors:['#eb4d4b','#f0932b','#f9ca24','#e55039','#ff6348','#ffbe76'], stroke:'#eb4d4b44' },
-  ice:     { bg:'#0a0a1f', colors:['#a29bfe','#74b9ff','#dfe6e9','#81ecec','#55efc4','#636e72'], stroke:'#a29bfe44' }
+  ice:     { bg:'#0a0a1f', colors:['#a29bfe','#74b9ff','#dfe6e9','#81ecec','#55efc4','#636e72'], stroke:'#a29bfe44' },
+  slavic:  { bg:'#120505', colors:['#e74c3c','#ff6b6b','#f5d76e','#ffd700','#ecf0f1','#d35400'], stroke:'#e74c3c66' },
+  rune:    { bg:'#08081a', colors:['#c0c0e0','#e8e8ff','#a0a0cc','#9b59b6','#dcdcf0','#8080b0'], stroke:'#c0c0e066' }
 };
 
 const TRADITIONS = {
-  vajrayana: { rings:6, petals:8, symmetry:8, complexity:6, shapes:['circle','square','diamond'], palette:'samsara', fractalDepth:0, lineWidth:1, innerRotation:0 },
-  theravada: { rings:4, petals:8, symmetry:4, complexity:3, shapes:['circle'], palette:'dharma', fractalDepth:0, lineWidth:1, innerRotation:0 },
-  zen:       { rings:3, petals:12, symmetry:1, complexity:2, shapes:['circle'], palette:'void', fractalDepth:0, lineWidth:2, innerRotation:0 },
-  tibetan:   { rings:8, petals:8, symmetry:8, complexity:8, shapes:['circle','square','triangle','lotus'], palette:'samsara', fractalDepth:0, lineWidth:1, innerRotation:0 },
-  shingon:   { rings:5, petals:12, symmetry:12, complexity:7, shapes:['circle','lotus','diamond'], palette:'fire', fractalDepth:0, lineWidth:1, innerRotation:0 },
-  fractal:   { rings:3, petals:3, symmetry:3, complexity:2, shapes:['triangle'], palette:'ice', fractalDepth:5, lineWidth:0.6, innerRotation:0 },
-  custom:    { rings:6, petals:8, symmetry:8, complexity:5, shapes:['circle','square'], palette:'samsara', fractalDepth:0, lineWidth:1, innerRotation:0 }
+  vajrayana: { rings:7, petals:8, symmetry:8, complexity:7, shapes:['circle','square','diamond'], palette:'samsara', fractalDepth:0, lineWidth:1, innerRotation:0, strokeOnly:false, filledMode:false, scale:85 },
+  theravada: { rings:3, petals:4, symmetry:4, complexity:2, shapes:['circle'], palette:'samsara', fractalDepth:0, lineWidth:1.5, innerRotation:0, strokeOnly:true, filledMode:false, scale:75 },
+  zen:       { rings:2, petals:1, symmetry:1, complexity:1, shapes:['circle'], palette:'ice', fractalDepth:0, lineWidth:3, innerRotation:0, strokeOnly:true, filledMode:false, scale:90 },
+  tibetan:   { rings:10, petals:8, symmetry:8, complexity:9, shapes:['circle','square','triangle','lotus','diamond'], palette:'fire', fractalDepth:0, lineWidth:0.8, innerRotation:0, strokeOnly:false, filledMode:true, scale:80 },
+  shingon:   { rings:5, petals:16, symmetry:12, complexity:7, shapes:['circle','lotus','diamond','star'], palette:'fire', fractalDepth:0, lineWidth:0.7, innerRotation:10, strokeOnly:false, filledMode:false, scale:82 },
+  fractal:   { rings:2, petals:3, symmetry:3, complexity:1, shapes:['triangle'], palette:'ice', fractalDepth:6, lineWidth:0.5, innerRotation:0, strokeOnly:true, filledMode:false, scale:88 },
+  slavic:    { rings:8, petals:8, symmetry:8, complexity:8, shapes:['circle','square','star','diamond'], palette:'slavic', fractalDepth:0, lineWidth:1.6, innerRotation:22, strokeOnly:false, filledMode:true, scale:82 },
+  runic:     { rings:4, petals:6, symmetry:6, complexity:4, shapes:['diamond','star','triangle'], palette:'rune', fractalDepth:0, lineWidth:2, innerRotation:0, strokeOnly:true, filledMode:false, scale:75 },
+  custom:    { rings:5, petals:12, symmetry:6, complexity:4, shapes:['circle','lotus','diamond'], palette:'samsara', fractalDepth:0, lineWidth:1, innerRotation:15, strokeOnly:false, filledMode:false, scale:80 }
 };
 
 const MANTRAS = {
@@ -24,6 +25,9 @@ const MANTRAS = {
   tayata:    { text:'तद्यथा ॐ बेकन्द्ज़े', chars:['त','द्य','था','ॐ','बे','क','न्द्ज़े'] },
   nam_myoho: { text:'南無妙法蓮華經', chars:['南','無','妙','法','蓮','華','經'] },
   om_ah_hum: { text:'ॐ आः हूँ वज्र गुरु', chars:['ॐ','आः','हूँ','व','ज्र','गु','रु'] },
+  slavic_runes: { text:'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ', chars:['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'] },
+  slavic_prayer: { text:'Слава Роду Свет Правь Навь Явь', chars:['С','л','а','в','а','Р','о','д','у','С','в','е','т','П','р','а','в','ь','Н','а','в','ь','Я','в','ь'] },
+  glagolitic: { text:'ⰀⰁⰂⰃⰄⰅⰆⰈⰉⰊⰋⰌⰍⰎⰏⰐⰑⰒ', chars:['Ⰰ','Ⰱ','Ⰲ','Ⰳ','Ⰴ','Ⰵ','Ⰶ','Ⰸ','Ⰹ','Ⰺ','Ⰻ','Ⰼ','Ⰽ','Ⰾ','Ⰿ','Ⱀ','Ⱁ','Ⱂ'] },
   custom_mantra: { text:'', chars:[] }
 };
 
@@ -38,7 +42,12 @@ const SACRED_OBJECTS = {
   elephant: { name:'Elephant', draw(c,s,l){c.lineWidth=l;c.beginPath();c.ellipse(-s*.05,0,s*.25,s*.16,0,0,Math.PI*2);c.stroke();c.beginPath();c.arc(s*.2,-s*.12,s*.13,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(s*.32,-s*.06);c.quadraticCurveTo(s*.42,s*.02,s*.38,s*.15);c.quadraticCurveTo(s*.35,s*.22,s*.28,s*.18);c.stroke();c.beginPath();c.moveTo(-s*.18,s*.14);c.lineTo(-s*.2,s*.38);c.moveTo(-s*.06,s*.16);c.lineTo(-s*.06,s*.38);c.moveTo(s*.08,s*.16);c.lineTo(s*.06,s*.38);c.moveTo(s*.18,s*.12);c.lineTo(s*.18,s*.38);c.stroke();}},
   moon: { name:'Moon', draw(c,s,l){c.lineWidth=l;c.beginPath();c.arc(0,0,s*.35,0,Math.PI*2);c.stroke();c.save();c.globalCompositeOperation='destination-out';c.beginPath();c.arc(s*.12,-s*.05,s*.24,0,Math.PI*2);c.fill();c.restore();c.beginPath();c.arc(s*.12,-s*.05,s*.24,0,Math.PI*2);c.stroke();}},
   tree: { name:'Bodhi Tree', draw(c,s,l){c.lineWidth=l;c.beginPath();c.moveTo(-s*.025,s*.4);c.lineTo(-s*.015,-s*.08);c.moveTo(s*.025,s*.4);c.lineTo(s*.015,-s*.08);c.stroke();for(let i=0;i<3;i++){const y=-s*.12-i*s*.11,w=s*(.22-i*.04);c.beginPath();c.moveTo(0,y-s*.08);c.quadraticCurveTo(-w,y-s*.04,-w*.7,y+s*.04);c.quadraticCurveTo(0,y+s*.06,w*.7,y+s*.04);c.quadraticCurveTo(w,y-s*.04,0,y-s*.08);c.stroke();}}},
-  om: { name:'Om ॐ', draw(c,s,l){c.lineWidth=l;c.font=`${s*.7}px serif`;c.textAlign='center';c.textBaseline='middle';c.strokeText('ॐ',0,0);}}
+  om: { name:'Om ॐ', draw(c,s,l){c.lineWidth=l;c.font=`${s*.7}px serif`;c.textAlign='center';c.textBaseline='middle';c.strokeText('ॐ',0,0);}},
+  algiz: { name:'Algiz ᛉ', draw(c,s,l){c.lineWidth=l;c.beginPath();c.moveTo(0,s*.45);c.lineTo(0,-s*.45);c.stroke();c.beginPath();c.moveTo(0,-s*.15);c.lineTo(-s*.25,-s*.45);c.moveTo(0,-s*.15);c.lineTo(s*.25,-s*.45);c.stroke();}},
+  othala: { name:'Othala ᛟ', draw(c,s,l){c.lineWidth=l;c.beginPath();c.moveTo(-s*.2,s*.45);c.lineTo(-s*.2,0);c.lineTo(0,-s*.35);c.lineTo(s*.2,0);c.lineTo(s*.2,s*.45);c.stroke();c.beginPath();c.moveTo(-s*.2,s*.1);c.lineTo(s*.2,s*.1);c.stroke();}},
+  kolovrat: { name:'Kolovrat ☸', draw(c,s,l){c.lineWidth=l;c.beginPath();c.arc(0,0,s*.35,0,Math.PI*2);c.stroke();for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2;c.save();c.rotate(a);c.beginPath();c.moveTo(0,0);c.lineTo(0,-s*.35);c.lineTo(s*.12,-s*.25);c.stroke();c.restore();}}},
+  runicStar: { name:'Runic Star', draw(c,s,l){c.lineWidth=l;for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2;c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(a)*s*.4,Math.sin(a)*s*.4);c.stroke();}c.beginPath();c.arc(0,0,s*.08,0,Math.PI*2);c.fill();}},
+  worldTree: { name:'World Tree', draw(c,s,l){c.lineWidth=l;c.beginPath();c.moveTo(0,s*.45);c.lineTo(0,-s*.25);c.stroke();for(let i=0;i<3;i++){const y=-s*(.05+i*.1),sp=s*(.2-i*.04);c.beginPath();c.moveTo(0,y);c.lineTo(-sp,y-s*.1);c.moveTo(0,y);c.lineTo(sp,y-s*.1);c.stroke();}c.beginPath();c.moveTo(-s*.15,s*.45);c.quadraticCurveTo(-s*.2,s*.3,-s*.1,s*.2);c.moveTo(s*.15,s*.45);c.quadraticCurveTo(s*.2,s*.3,s*.1,s*.2);c.stroke();}}
 };
 
 class MandalaEngine {
@@ -76,13 +85,14 @@ class MandalaEngine {
   setTradition(key) {
     const t=TRADITIONS[key]; if(!t) return;
     this.params.tradition=key;
-    if(key!=='custom'){
-      this.params.rings=t.rings; this.params.petals=t.petals;
-      this.params.symmetry=t.symmetry; this.params.complexity=t.complexity;
-      this.params.shapes=new Set(t.shapes); this.params.palette=t.palette;
-      this.params.fractalDepth=t.fractalDepth; this.params.lineWidth=t.lineWidth;
-      this.params.innerRotation=t.innerRotation;
-    }
+    this.params.rings=t.rings; this.params.petals=t.petals;
+    this.params.symmetry=t.symmetry; this.params.complexity=t.complexity;
+    this.params.shapes=new Set(t.shapes); this.params.palette=t.palette;
+    this.params.fractalDepth=t.fractalDepth; this.params.lineWidth=t.lineWidth;
+    this.params.innerRotation=t.innerRotation;
+    if(t.strokeOnly!==undefined) this.params.strokeOnly=t.strokeOnly;
+    if(t.filledMode!==undefined) this.params.filledMode=t.filledMode;
+    if(t.scale!==undefined) this.params.scale=t.scale;
   }
 
   getPalette() {

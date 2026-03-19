@@ -60,19 +60,41 @@ document.addEventListener('DOMContentLoaded', () => {
   function setSlider(id, val) { const el=document.getElementById(id); if(el){el.value=val; updateVal(id);} }
 
   // ═══ TRADITIONS ═══
+  const tooltip = document.getElementById('traditionTooltip');
+  const tooltipText = document.getElementById('tooltipText');
+  const tooltipLink = document.getElementById('tooltipLink');
+
   document.querySelectorAll('.tradition-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tradition-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
+      engine.params.customGradient.enabled = false;
+      const gradCb = document.getElementById('gradientEnabled');
+      if (gradCb) gradCb.checked = false;
       engine.setTradition(btn.dataset.tradition);
+      currentSeed = Math.random() * 99999;
       syncUI(); generate();
+      showTraditionTooltip(btn);
     });
+    btn.addEventListener('mouseenter', () => showTraditionTooltip(btn));
+    btn.removeAttribute('title');
   });
+
+  function showTraditionTooltip(btn) {
+    const info = btn.dataset.info;
+    const link = btn.dataset.link;
+    if (!info) { tooltip.classList.add('hidden'); return; }
+    tooltipText.textContent = info;
+    if (link) { tooltipLink.href = link; tooltipLink.classList.remove('hidden'); }
+    else { tooltipLink.classList.add('hidden'); }
+    tooltip.classList.remove('hidden');
+  }
 
   function syncUI() {
     const p = engine.params;
     setSlider('rings',p.rings); setSlider('petals',p.petals);
     setSlider('symmetry',p.symmetry); setSlider('complexity',p.complexity);
+    setSlider('scale',p.scale);
     setSlider('lineWidth',Math.round(p.lineWidth*10));
     setSlider('innerRotation',p.innerRotation); setSlider('fractalDepth',p.fractalDepth);
     document.getElementById('strokeOnly').checked = p.strokeOnly;
@@ -123,8 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
     engine.setParam('mantra', v);
     customMantraInput.classList.toggle('hidden', v !== 'custom_mantra');
     const texts = { om_mani:'ॐ मणि पद्मे हूँ', gate_gate:'गते गते पारगते', om_tare:'ॐ तारे तुत्तारे',
-      tayata:'तद्यथा ॐ बेकन्द्ज़े', nam_myoho:'南無妙法蓮華經', om_ah_hum:'ॐ आः हूँ वज्र गुरु' };
-    document.getElementById('headerMantra').textContent = texts[v] || 'ॐ मणि पद्मे हूँ';
+      tayata:'तद्यथा ॐ बेकन्द्ज़े', nam_myoho:'南無妙法蓮華經', om_ah_hum:'ॐ आः हूँ वज्र गुरु',
+      slavic_runes:'ᚠᚢᚦᚨᚱᚲ', slavic_prayer:'Слава Роду', glagolitic:'ⰀⰁⰂⰃⰄⰅ' };
+    const hm = document.getElementById('headerMantra');
+    if (hm) hm.textContent = texts[v] || 'ॐ मणि पद्मे हूँ';
     generate();
   });
   customMantraInput.addEventListener('input', ()=>{ engine.setParam('customMantra', customMantraInput.value); generate(); });
@@ -141,10 +165,25 @@ document.addEventListener('DOMContentLoaded', () => {
     glitch.glitchBurst(); setTimeout(()=>glitch.glitchBurst(),300); setTimeout(()=>glitch.glitchBurst(),700);
   });
 
-  // ═══ COLOR CORRECTION ═══
+  // ═══ COLOR CORRECTION (via CSS filter for guaranteed visual) ═══
+  const canvasFrame = document.getElementById('canvasFrame');
+  function updateColorFilter() {
+    const cc = glitch.colorCorrection;
+    const parts = [];
+    if (cc.hueRotate !== 0) parts.push(`hue-rotate(${cc.hueRotate}deg)`);
+    if (cc.saturation !== 100) parts.push(`saturate(${cc.saturation}%)`);
+    if (cc.brightness !== 100) parts.push(`brightness(${cc.brightness}%)`);
+    if (cc.contrast !== 100) parts.push(`contrast(${cc.contrast}%)`);
+    if (cc.invert !== 0) parts.push(`invert(${cc.invert}%)`);
+    canvasFrame.style.filter = parts.length ? parts.join(' ') : '';
+  }
   ['hueRotate','saturation','brightness','contrast','invert'].forEach(id => {
     const el = document.getElementById(id); if(!el) return;
-    el.addEventListener('input', ()=>{ updateVal(id); glitch.setColorCorrection(id, parseFloat(el.value)); generate(); });
+    el.addEventListener('input', ()=>{
+      updateVal(id);
+      glitch.setColorCorrection(id, parseFloat(el.value));
+      updateColorFilter();
+    });
   });
 
   document.querySelectorAll('.color-preset').forEach(btn => {
@@ -207,16 +246,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // ═══ ANIMATE / PLAY (merged) ═══
   const animModeSelect = document.getElementById('animMode');
   const btnAnimate = document.getElementById('btnAnimate');
+  const animSpeedSlider = document.getElementById('animSpeed');
   let autoPlayInterval = null;
+  let currentAnimMode = 'rotate';
+  let animBaseParams = {};
+  let animSpeedMul = 5;
+
+  animSpeedSlider.addEventListener('input', function(){ updateVal('animSpeed'); animSpeedMul = parseInt(this.value); });
 
   btnAnimate.addEventListener('click', () => {
     if (isFlyingInto) { stopFlyInto(); document.getElementById('btnFlyInto').classList.remove('active'); document.getElementById('btnFlyInto').innerHTML='⊛ FLY INTO'; }
     if (isAnimating || autoPlayInterval) {
       stopAll();
     } else {
-      const mode = animModeSelect.value;
-      if (mode === 'rotate') startAnim();
-      else startAutoPlay();
+      currentAnimMode = animModeSelect.value;
+      if (currentAnimMode === 'play') startAutoPlay();
+      else startAnim();
     }
   });
 
@@ -231,6 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function startAnim() {
     isAnimating=true; animTime=0;
+    animBaseParams = {
+      scale: engine.params.scale,
+      innerRotation: engine.params.innerRotation,
+      rings: engine.params.rings,
+      petals: engine.params.petals,
+      symmetry: engine.params.symmetry,
+      complexity: engine.params.complexity,
+      lineWidth: engine.params.lineWidth
+    };
     btnAnimate.classList.add('active');
     btnAnimate.innerHTML='◎ STOP';
     animLoop();
@@ -240,12 +294,49 @@ document.addEventListener('DOMContentLoaded', () => {
     isAnimating=false;
     if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
     engine.setParam('rotation',0);
-    generate();
+    if (animBaseParams.scale) {
+      engine.setParam('scale', animBaseParams.scale);
+      engine.setParam('innerRotation', animBaseParams.innerRotation);
+      engine.setParam('rings', animBaseParams.rings);
+      engine.setParam('petals', animBaseParams.petals);
+      engine.setParam('symmetry', animBaseParams.symmetry);
+      engine.setParam('complexity', animBaseParams.complexity);
+      engine.setParam('lineWidth', animBaseParams.lineWidth);
+    }
+    syncUI(); generate();
+  }
+
+  function applyAnimFrame(mode, t, speed, base) {
+    const s = speed / 5;
+    if (mode === 'rotate') {
+      engine.setParam('rotation', animTime * 0.3 * s);
+    } else if (mode === 'pulse') {
+      engine.setParam('scale', base.scale + Math.sin(t * 2 * s) * 20);
+      engine.setParam('rotation', animTime * 0.1 * s);
+    } else if (mode === 'breathe') {
+      engine.setParam('innerRotation', base.innerRotation + Math.sin(t * 0.8 * s) * 30);
+      engine.setParam('scale', base.scale + Math.sin(t * 0.5 * s) * 8);
+      engine.setParam('lineWidth', base.lineWidth + Math.sin(t * 1.2 * s) * 0.5);
+    } else if (mode === 'morph') {
+      const ms = 0.3 * s;
+      engine.setParam('rings', Math.max(1, Math.round(base.rings + Math.sin(t * ms) * 3)));
+      engine.setParam('petals', Math.max(1, Math.round(base.petals + Math.sin(t * ms * 0.7) * 6)));
+      engine.setParam('symmetry', Math.max(1, Math.round(base.symmetry + Math.sin(t * ms * 0.5) * 4)));
+      engine.setParam('complexity', Math.max(1, Math.round(base.complexity + Math.sin(t * ms * 0.3) * 3)));
+      engine.setParam('lineWidth', Math.max(0.3, base.lineWidth + Math.sin(t * ms * 0.4) * 1));
+      engine.setParam('rotation', animTime * 0.15 * s);
+    } else if (mode === 'kaleidoscope') {
+      engine.setParam('rotation', animTime * 0.5 * s);
+      engine.setParam('innerRotation', base.innerRotation + Math.sin(t * 0.7 * s) * 45);
+      engine.setParam('scale', base.scale + Math.sin(t * 0.3 * s) * 10);
+    }
   }
 
   function animLoop() {
     if(!isAnimating) return;
-    animTime++; engine.setParam('rotation', animTime*0.3);
+    animTime++;
+    const t = animTime * 0.016;
+    applyAnimFrame(currentAnimMode, t, animSpeedMul, animBaseParams);
     engine.generate(currentSeed); glitch.time=animTime; glitch.apply();
     if(asciiMode) updateAscii();
     animFrame = requestAnimationFrame(animLoop);
@@ -255,7 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAnimate.classList.add('active');
     btnAnimate.innerHTML = '◎ STOP';
     triggerRandom();
-    autoPlayInterval = setInterval(triggerRandom, 250);
+    const interval = Math.max(100, 500 - animSpeedMul * 25);
+    autoPlayInterval = setInterval(triggerRandom, interval);
   }
 
   function stopAutoPlay() {
@@ -369,24 +461,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // ═══ RANDOM ═══
   document.getElementById('btnRandom').addEventListener('click', ()=>{
     currentSeed = Math.random()*99999;
-    engine.setParam('rings', 2+Math.floor(Math.random()*10));
-    engine.setParam('petals', 3+Math.floor(Math.random()*29));
-    engine.setParam('symmetry', 1+Math.floor(Math.random()*23));
-    engine.setParam('complexity', 1+Math.floor(Math.random()*10));
-    engine.setParam('scale', 40+Math.floor(Math.random()*60));
-    engine.setParam('lineWidth', 0.3+Math.random()*3);
-    engine.setParam('innerRotation', Math.floor(Math.random()*45));
-    engine.setParam('fractalDepth', Math.random()>0.6 ? Math.floor(Math.random()*6) : 0);
-    engine.setParam('strokeOnly', Math.random()>0.7);
-    engine.setParam('filledMode', false);
 
-    const all=['circle','square','triangle','lotus','diamond','star'], shapes=new Set();
-    shapes.add(all[Math.floor(Math.random()*all.length)]);
-    all.forEach(s=>{ if(Math.random()>0.5) shapes.add(s); });
-    engine.params.shapes = shapes;
+    const trads = Object.keys(TRADITIONS).filter(k=>k!=='custom');
+    const randomTrad = trads[Math.floor(Math.random()*trads.length)];
+    engine.setTradition(randomTrad);
+    document.querySelectorAll('.tradition-btn').forEach(b=>b.classList.toggle('active', b.dataset.tradition===randomTrad));
 
-    const pals = Object.keys(PALETTES);
-    engine.setParam('palette', pals[Math.floor(Math.random()*pals.length)]);
+    const variation = Math.random();
+    if (variation > 0.4) {
+      const p = engine.params;
+      p.rings = Math.max(1, p.rings + Math.floor(Math.random()*5) - 2);
+      p.petals = Math.max(1, p.petals + Math.floor(Math.random()*9) - 4);
+      p.symmetry = Math.max(1, p.symmetry + Math.floor(Math.random()*7) - 3);
+      p.complexity = Math.max(1, Math.min(10, p.complexity + Math.floor(Math.random()*5) - 2));
+      p.lineWidth = Math.max(0.3, p.lineWidth + (Math.random()-0.5)*1.5);
+      p.innerRotation = Math.max(0, p.innerRotation + Math.floor(Math.random()*20) - 10);
+    }
 
     const objs = Object.keys(SACRED_OBJECTS).filter(k=>k!=='none');
     if (Math.random()>0.5) {
@@ -396,6 +486,17 @@ document.addEventListener('DOMContentLoaded', () => {
       engine.params.objects.ring = Math.floor(Math.random()*8);
       engine.params.objects.style = ['stroke','fill','glow'][Math.floor(Math.random()*3)];
     } else { engine.params.objects.type = 'none'; }
+
+    const mantras = Object.keys(MANTRAS).filter(k=>k!=='custom_mantra');
+    const randomMantra = mantras[Math.floor(Math.random()*mantras.length)];
+    engine.setParam('mantra', randomMantra);
+    const mantraSel = document.getElementById('mantraSelect');
+    if (mantraSel) mantraSel.value = randomMantra;
+
+    const encodings = ['spiral','radial','hidden','glitch'];
+    engine.setParam('mantraEncoding', encodings[Math.floor(Math.random()*encodings.length)]);
+    const encSel = document.getElementById('mantraEncoding');
+    if (encSel) encSel.value = engine.params.mantraEncoding;
 
     glitch.setParam('rgbShift', Math.floor(Math.random()*15));
     glitch.setParam('noise', Math.floor(Math.random()*40));
@@ -447,7 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('gifSpeed').addEventListener('input', function(){ updateVal('gifSpeed'); });
 
   document.getElementById('btnExportConfirm').addEventListener('click', () => {
     if (currentExportFmt === 'png') exportHiRes(selectedExportRes);
@@ -506,63 +606,94 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function exportGifFromModal() {
-    const fmt=document.getElementById('gifFormat').value, res=parseInt(document.getElementById('gifResolution').value);
-    const dur=parseInt(document.getElementById('gifDuration').value), fps=parseInt(document.getElementById('gifFps').value);
-    const spd=parseInt(document.getElementById('gifSpeed').value);
-    if(fmt==='webm') exportWebM(res,dur,fps,spd); else exportGIF(res,dur,fps,spd);
+
+  function renderAnimFrame(fc, frame, total, speed, mode, baseParams) {
+    const t = (frame / 60) * 0.016 * 60;
+    const savedAnimTime = animTime;
+    animTime = frame;
+    applyAnimFrame(mode, t, speed, baseParams);
+    engine.renderToCanvas(fc, currentSeed);
+    if (glitch.hasActiveEffects()) {
+      const gc = document.createElement('canvas'); gc.width = fc.width; gc.height = fc.height;
+      glitch.time = frame * 2; glitch.applyToCanvas(gc.getContext('2d'), fc, fc.width, fc.height);
+      fc.getContext('2d').drawImage(gc, 0, 0);
+    }
+    animTime = savedAnimTime;
   }
 
-  function exportGIF(size,duration,fps,speed) {
-    const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
+  function getRenderProgress() {
+    const fill = document.getElementById('renderProgressFill');
+    const txt = document.getElementById('renderProgressText');
+    const prog = document.getElementById('renderProgress');
+    return { fill, txt, prog };
+  }
+
+  function showRenderProgress(pct, msg) {
+    const { fill, txt, prog } = getRenderProgress();
     prog.classList.remove('hidden');
-    const total=fps*duration, enc=new GIFEncoder(size,size); enc.setDelay(1000/fps);
-    const fc=document.createElement('canvas'); fc.width=size; fc.height=size;
-    let frame=0;
+    fill.style.width = Math.round(pct) + '%';
+    txt.textContent = msg;
+  }
+
+  function hideRenderProgress(delay) {
+    setTimeout(() => { getRenderProgress().prog.classList.add('hidden'); }, delay || 600);
+  }
+
+  function exportGIF(size, duration, fps, speed, animMode) {
+    showRenderProgress(0, 'Starting...');
+    const baseParams = {
+      scale: engine.params.scale, innerRotation: engine.params.innerRotation,
+      rings: engine.params.rings, petals: engine.params.petals,
+      symmetry: engine.params.symmetry, complexity: engine.params.complexity,
+      lineWidth: engine.params.lineWidth
+    };
+    const total = fps * duration, enc = new GIFEncoder(size, size); enc.setDelay(1000 / fps);
+    const fc = document.createElement('canvas'); fc.width = size; fc.height = size;
+    let frame = 0;
     function next() {
-      if (frame>=total) {
-        txt.textContent='Encoding GIF...'; fill.style.width='95%';
-        requestAnimationFrame(()=>{
-          const blob=enc.render(), link=document.createElement('a');
-          link.download=`meta-mandala-${Date.now()}.gif`; link.href=URL.createObjectURL(blob); link.click();
-          fill.style.width='100%'; txt.textContent='Done!';
-          setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
-          engine.setParam('rotation',0); generate();
+      if (frame >= total) {
+        showRenderProgress(95, 'Encoding GIF...');
+        requestAnimationFrame(() => {
+          const blob = enc.render(), link = document.createElement('a');
+          link.download = `meta-mandala-${Date.now()}.gif`; link.href = URL.createObjectURL(blob); link.click();
+          showRenderProgress(100, 'Done!');
+          hideRenderProgress(1200);
+          engine.setParam('rotation', 0); generate();
         }); return;
       }
-      engine.setParam('rotation',(frame/total)*360*speed);
-      engine.renderToCanvas(fc, currentSeed);
-      if (glitch.hasActiveEffects()) {
-        const gc=document.createElement('canvas'); gc.width=size; gc.height=size;
-        glitch.time=frame*2; glitch.applyToCanvas(gc.getContext('2d'),fc,size,size);
-        fc.getContext('2d').drawImage(gc,0,0);
-      }
+      renderAnimFrame(fc, frame, total, speed, animMode, baseParams);
       enc.addFrame(fc); frame++;
-      fill.style.width=Math.round(frame/total*90)+'%'; txt.textContent=`Frame ${frame}/${total}`;
+      showRenderProgress(frame / total * 90, `Frame ${frame}/${total}`);
       requestAnimationFrame(next);
     }
     next();
   }
 
-  async function exportWebM(size,duration,fps,speed) {
-    const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
-    prog.classList.remove('hidden');
-    const fc=document.createElement('canvas'); fc.width=size; fc.height=size;
-    const exp=new VideoExporter(fc,{fps,duration});
-    const blob = await exp.exportWebM((frame,total)=>{
-      engine.setParam('rotation',(frame/total)*360*speed);
-      engine.renderToCanvas(fc, currentSeed);
-      if (glitch.hasActiveEffects()) {
-        const gc=document.createElement('canvas'); gc.width=size; gc.height=size;
-        glitch.time=frame*2; glitch.applyToCanvas(gc.getContext('2d'),fc,size,size);
-        fc.getContext('2d').drawImage(gc,0,0);
-      }
-    }, pct=>{ fill.style.width=Math.round(pct*95)+'%'; txt.textContent=`Recording ${Math.round(pct*100)}%`; });
-    const link=document.createElement('a'); link.download=`meta-mandala-${Date.now()}.webm`;
-    link.href=URL.createObjectURL(blob); link.click();
-    fill.style.width='100%'; txt.textContent='Done!';
-    setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); },600);
-    engine.setParam('rotation',0); generate();
+  async function exportWebM(size, duration, fps, speed, animMode) {
+    showRenderProgress(0, 'Starting...');
+    const baseParams = {
+      scale: engine.params.scale, innerRotation: engine.params.innerRotation,
+      rings: engine.params.rings, petals: engine.params.petals,
+      symmetry: engine.params.symmetry, complexity: engine.params.complexity,
+      lineWidth: engine.params.lineWidth
+    };
+    const fc = document.createElement('canvas'); fc.width = size; fc.height = size;
+    const exp = new VideoExporter(fc, { fps, duration });
+    try {
+      const blob = await exp.exportWebM((frame, total) => {
+        renderAnimFrame(fc, frame, total, speed, animMode, baseParams);
+      }, pct => { showRenderProgress(pct * 95, `Recording ${Math.round(pct * 100)}%`); });
+      const ext = blob._ext || 'webm';
+      const link = document.createElement('a');
+      link.download = `meta-mandala-${Date.now()}.${ext}`;
+      link.href = URL.createObjectURL(blob); link.click();
+      showRenderProgress(100, 'Done!');
+    } catch (err) {
+      console.error('WebM export error:', err);
+      showRenderProgress(100, 'Error: ' + err.message);
+    }
+    hideRenderProgress(1200);
+    engine.setParam('rotation', 0); generate();
   }
 
   // ═══ JSON EXPORT / IMPORT ═══
@@ -639,6 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Object.keys(data.colorCorrection).forEach(k => glitch.setColorCorrection(k, data.colorCorrection[k]));
     }
     syncUI(); syncGlitchUI(); syncObjectsUI(); syncImportUI(data);
+    updateColorFilter();
     generate();
   }
 
@@ -677,55 +809,89 @@ document.addEventListener('DOMContentLoaded', () => {
     if (this.files[0]) { importJSON(this.files[0]); this.value = ''; }
   });
 
-  // ═══ RECORD (capture canvas as WebM video) ═══
+  // ═══ LIVE RECORD (capture canvas as video) ═══
   let mediaRecorder = null, recordedChunks = [];
+  let recTimerInterval = null, recStartTime = 0;
   const btnRecord = document.getElementById('btnRecord');
+  const recTimerEl = document.getElementById('recTimer');
+
   btnRecord.addEventListener('click', ()=>{
     if (mediaRecorder && mediaRecorder.state === 'recording') { stopRecording(); }
     else { startRecording(); }
   });
 
+  function getSupportedMime() {
+    const list = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+    for (const m of list) { if (MediaRecorder.isTypeSupported(m)) return m; }
+    return '';
+  }
+
   function startRecording() {
     const combined = document.createElement('canvas');
-    combined.width = 800; combined.height = 800;
+    combined.width = mandalaCanvas.width; combined.height = mandalaCanvas.height;
     const cCtx = combined.getContext('2d');
     const cStream = combined.captureStream(30);
 
     function drawCombined() {
+      cCtx.clearRect(0, 0, combined.width, combined.height);
       cCtx.drawImage(mandalaCanvas, 0, 0);
       cCtx.drawImage(glitchCanvas, 0, 0);
       if (mediaRecorder && mediaRecorder.state === 'recording')
         requestAnimationFrame(drawCombined);
     }
 
-    recordedChunks = [];
-    mediaRecorder = new MediaRecorder(cStream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 8000000
-    });
+    const mime = getSupportedMime();
+    const opts = { videoBitsPerSecond: 8000000 };
+    if (mime) opts.mimeType = mime;
+
+    try {
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(cStream, opts);
+    } catch(err) {
+      console.error('MediaRecorder init failed:', err);
+      try {
+        mediaRecorder = new MediaRecorder(cStream);
+        recordedChunks = [];
+      } catch(err2) {
+        console.error('MediaRecorder fallback failed:', err2);
+        alert('Recording not supported in this browser');
+        return;
+      }
+    }
+
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onerror = e => { console.error('MediaRecorder error:', e); stopRecording(); };
     mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const ext = (mime && mime.includes('mp4')) ? 'mp4' : 'webm';
+      const type = (mime && mime.includes('mp4')) ? 'video/mp4' : 'video/webm';
+      const blob = new Blob(recordedChunks, { type });
       const link = document.createElement('a');
-      link.download = `meta-mandala-${Date.now()}.webm`;
+      link.download = `meta-mandala-${Date.now()}.${ext}`;
       link.href = URL.createObjectURL(blob);
       link.click();
     };
 
-    mediaRecorder.start();
+    mediaRecorder.start(100);
     drawCombined();
-    btnRecord.classList.add('active');
-    btnRecord.innerHTML = '⏺ STOP';
-    btnRecord.style.borderColor = '#eb4d4b';
-    btnRecord.style.color = '#eb4d4b';
+    btnRecord.classList.add('rec-active');
+    btnRecord.innerHTML = '⏹ STOP';
+    recStartTime = Date.now();
+    recTimerEl.classList.remove('hidden');
+    recTimerEl.textContent = '00:00';
+    recTimerInterval = setInterval(()=>{
+      const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
+      const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const ss = String(elapsed % 60).padStart(2, '0');
+      recTimerEl.textContent = `${mm}:${ss}`;
+    }, 500);
   }
 
   function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-    btnRecord.classList.remove('active');
-    btnRecord.innerHTML = '⏺ REC';
-    btnRecord.style.borderColor = '';
-    btnRecord.style.color = '';
+    btnRecord.classList.remove('rec-active');
+    btnRecord.innerHTML = '⏺ LIVE REC';
+    clearInterval(recTimerInterval);
+    recTimerEl.classList.add('hidden');
   }
 
   // ═══ ABOUT PANEL ═══
@@ -814,12 +980,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const dur = parseInt(document.getElementById('recDuration').value);
       const fps = parseInt(document.getElementById('recFps').value);
       const spd = parseInt(document.getElementById('recSpeed').value);
-      if (fmt === 'webm') exportWebM(size, dur, fps, spd);
-      else exportGIF(size, dur, fps, spd);
+      const mode = animModeSelect.value === 'play' ? 'rotate' : animModeSelect.value;
+      if (fmt === 'webm') exportWebM(size, dur, fps, spd, mode);
+      else exportGIF(size, dur, fps, spd, mode);
     });
   }
 
+  // ═══ NEW SEED ═══
+  document.getElementById('btnNewSeed').addEventListener('click', () => {
+    currentSeed = Math.random() * 99999;
+    generate();
+  });
+
   // ═══ INIT ═══
-  generate();
+  document.getElementById('btnRandom').click();
   console.log('%c☸ META MANDALA', 'color:#9b59b6;font-family:monospace');
 });

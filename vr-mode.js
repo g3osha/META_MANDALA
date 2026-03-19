@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 
-const LAYER_COUNT = 10;
+const LAYER_COUNT = 12;
 const LAYER_SIZE = 1024;
 const PLANE_SIZE = 4.5;
-const DEPTH_RANGE = 7;
-const CAM_Z = 5;
-const PARALLAX = 2.2;
-const SMOOTH = 0.05;
+const DEPTH_RANGE = 10;
+const CAM_Z_BASE = 6;
+const CAM_Z_NEAR = 1.5;
+const PARALLAX = 3.0;
+const SMOOTH = 0.06;
+const SMOOTH_Z = 0.04;
 
 let renderer, scene, camera;
 let layerMeshes = [];
@@ -15,8 +17,9 @@ let animId = null;
 let initialized = false;
 
 let videoEl = null, trackCanvas, trackCtx;
-let headX = 0, headY = 0;
-let smoothX = 0, smoothY = 0;
+let headX = 0, headY = 0, headDist = 0;
+let smoothX = 0, smoothY = 0, smoothZ = 0;
+let mouseZoom = 0;
 let trackingMode = 'none';
 
 function init() {
@@ -27,10 +30,10 @@ function init() {
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0a0f);
-  scene.fog = new THREE.FogExp2(0x0a0a0f, 0.06);
+  scene.fog = new THREE.FogExp2(0x0a0a0f, 0.04);
 
   camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-  camera.position.set(0, 0, CAM_Z);
+  camera.position.set(0, 0, CAM_Z_BASE);
 
   initialized = true;
 }
@@ -55,7 +58,10 @@ async function startTracking() {
   } catch (e) {
     trackingMode = 'mouse';
     const vrCanvas = document.getElementById('vrCanvas');
-    if (vrCanvas) vrCanvas.addEventListener('mousemove', onMouse);
+    if (vrCanvas) {
+      vrCanvas.addEventListener('mousemove', onMouse);
+      vrCanvas.addEventListener('wheel', onWheel, { passive: false });
+    }
     showTrackingIndicator(false);
   }
 }
@@ -67,10 +73,13 @@ function stopTracking() {
   }
   if (trackingMode === 'mouse') {
     const vrCanvas = document.getElementById('vrCanvas');
-    if (vrCanvas) vrCanvas.removeEventListener('mousemove', onMouse);
+    if (vrCanvas) {
+      vrCanvas.removeEventListener('mousemove', onMouse);
+      vrCanvas.removeEventListener('wheel', onWheel);
+    }
   }
   trackingMode = 'none';
-  headX = headY = smoothX = smoothY = 0;
+  headX = headY = headDist = smoothX = smoothY = smoothZ = mouseZoom = 0;
   hideTrackingIndicator();
 }
 
@@ -78,6 +87,11 @@ function onMouse(e) {
   const rect = e.target.getBoundingClientRect();
   headX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
   headY = -((e.clientY - rect.top) / rect.height - 0.5) * 2;
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  mouseZoom = Math.min(1, Math.max(0, mouseZoom + e.deltaY * 0.001));
 }
 
 function detectHead() {
@@ -102,6 +116,8 @@ function detectHead() {
   if (cnt > 30) {
     headX = -((sx / cnt) / 80 - 0.5) * 2;
     headY = -((sy / cnt) / 60 - 0.5) * 2;
+    const area = cnt / (80 * 60);
+    headDist = Math.min(1, Math.max(0, (area - 0.03) / 0.25));
   }
 }
 
@@ -113,7 +129,7 @@ function showTrackingIndicator(isCamera) {
     el.style.cssText = 'position:absolute;top:8px;left:8px;z-index:10;font:9px "JetBrains Mono",monospace;letter-spacing:1px;color:var(--text-dim,#6a6a8a);opacity:0.6;pointer-events:none;text-transform:uppercase';
     document.getElementById('canvasFrame').appendChild(el);
   }
-  el.textContent = isCamera ? '◉ head tracking' : '◎ mouse tracking';
+  el.textContent = isCamera ? '◉ head tracking · distance' : '◎ mouse · scroll to dive';
   el.style.display = 'block';
 }
 
@@ -180,13 +196,14 @@ function buildScene(layers, palette) {
       map: tex, transparent: true, side: THREE.DoubleSide,
       depthWrite: false
     });
-    const layerScale = 1 - ((LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1)) * 0.3;
+    const t = (LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1);
+    const layerScale = 1 - t * 0.35;
     const geo = new THREE.PlaneGeometry(PLANE_SIZE * layerScale, PLANE_SIZE * layerScale);
     const mesh = new THREE.Mesh(geo, mat);
-    const depth = -((LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1)) * DEPTH_RANGE;
+    const depth = -t * DEPTH_RANGE;
     mesh.position.z = depth;
     mesh.userData.baseZ = depth;
-    mesh.userData.breathPhase = i * 0.6;
+    mesh.userData.breathPhase = i * 0.5;
     layerMeshes.push(mesh);
     scene.add(mesh);
   });
@@ -210,19 +227,32 @@ function animate() {
   smoothX += (headX - smoothX) * SMOOTH;
   smoothY += (headY - smoothY) * SMOOTH;
 
-  const cx = smoothX * PARALLAX;
-  const cy = smoothY * PARALLAX;
+  const targetZ = trackingMode === 'camera' ? headDist : mouseZoom;
+  smoothZ += (targetZ - smoothZ) * SMOOTH_Z;
+
+  const camZ = CAM_Z_BASE - smoothZ * (CAM_Z_BASE - CAM_Z_NEAR);
+  const depthFactor = 1 + smoothZ * 1.5;
+
+  const cx = smoothX * PARALLAX * depthFactor;
+  const cy = smoothY * PARALLAX * depthFactor;
   camera.position.x = cx;
   camera.position.y = cy;
-  camera.position.z = CAM_Z;
-  camera.lookAt(cx, cy, -DEPTH_RANGE * 0.5);
+  camera.position.z = camZ;
+  camera.lookAt(cx * 0.3, cy * 0.3, -DEPTH_RANGE * 0.5);
+
+  camera.fov = 50 + smoothZ * 20;
+  camera.updateProjectionMatrix();
 
   layerMeshes.forEach((m, idx) => {
-    if (m.userData.breathPhase) {
-      const breath = Math.sin(time * 0.3 + m.userData.breathPhase) * 0.08;
-      const pull = Math.sin(time * 0.15) * 0.15 * (idx / layerMeshes.length);
-      m.position.z = m.userData.baseZ + breath - pull;
-    }
+    const phase = m.userData.breathPhase || 0;
+    const breath = Math.sin(time * 0.3 + phase) * 0.1;
+    const pull = Math.sin(time * 0.12) * 0.2 * (idx / layerMeshes.length);
+    const depthSpread = smoothZ * 0.5 * (idx / layerMeshes.length);
+    m.position.z = m.userData.baseZ + breath - pull - depthSpread;
+
+    const parallaxShift = smoothZ * 0.15 * (idx / layerMeshes.length);
+    m.position.x = -cx * parallaxShift;
+    m.position.y = -cy * parallaxShift;
   });
 
   resize();

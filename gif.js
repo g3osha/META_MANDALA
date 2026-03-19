@@ -232,40 +232,63 @@ class VideoExporter {
     this.duration = options.duration || 3;
   }
 
-  async exportWebM(renderFrame, onProgress) {
-    const stream = this.canvas.captureStream(this.fps);
-    const recorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 5000000
-    });
+  static getSupportedMime() {
+    const candidates = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+      'video/mp4'
+    ];
+    for (const m of candidates) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
+  }
 
+  async exportWebM(renderFrame, onProgress) {
+    const stream = this.canvas.captureStream(0);
+    const track = stream.getVideoTracks()[0];
+    const mime = VideoExporter.getSupportedMime();
+    const opts = { videoBitsPerSecond: 5000000 };
+    if (mime) opts.mimeType = mime;
+
+    let recorder;
+    try {
+      recorder = new MediaRecorder(stream, opts);
+    } catch(_) {
+      recorder = new MediaRecorder(stream);
+    }
     const chunks = [];
     recorder.ondataavailable = e => {
       if (e.data.size > 0) chunks.push(e.data);
     };
 
-    return new Promise((resolve) => {
+    const totalFrames = this.fps * this.duration;
+    const frameDelay = 1000 / this.fps;
+
+    return new Promise((resolve, reject) => {
+      recorder.onerror = e => reject(e.error || new Error('Recording failed'));
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const ext = (mime && mime.includes('mp4')) ? 'mp4' : 'webm';
+        const blob = new Blob(chunks, { type: mime || 'video/webm' });
+        blob._ext = ext;
         resolve(blob);
       };
 
       recorder.start();
-      const totalFrames = this.fps * this.duration;
       let frame = 0;
 
       const captureFrame = () => {
         if (frame >= totalFrames) {
-          recorder.stop();
+          setTimeout(() => recorder.stop(), 100);
           return;
         }
-
         renderFrame(frame, totalFrames);
+        if (track.requestFrame) track.requestFrame();
         frame++;
         if (onProgress) onProgress(frame / totalFrames);
-        requestAnimationFrame(captureFrame);
+        setTimeout(captureFrame, frameDelay);
       };
-
       captureFrame();
     });
   }
