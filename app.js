@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     engine.setParam('innerRotation', Math.floor(Math.random()*45));
     engine.setParam('fractalDepth', Math.random()>0.6 ? Math.floor(Math.random()*6) : 0);
     engine.setParam('strokeOnly', Math.random()>0.7);
-    engine.setParam('filledMode', Math.random()>0.5);
+    engine.setParam('filledMode', false);
 
     const all=['circle','square','triangle','lotus','diamond','star'], shapes=new Set();
     shapes.add(all[Math.floor(Math.random()*all.length)]);
@@ -425,12 +425,11 @@ document.addEventListener('DOMContentLoaded', () => {
       currentExportFmt = btn.dataset.fmt;
       document.getElementById('exportPngOpts').classList.toggle('hidden', currentExportFmt !== 'png');
       document.getElementById('exportSvgOpts').classList.toggle('hidden', currentExportFmt !== 'svg');
-      document.getElementById('exportGifOpts').classList.toggle('hidden', currentExportFmt !== 'gif');
-      document.getElementById('exportJsonOpts').classList.toggle('hidden', currentExportFmt !== 'json');
+      const jsonOpts = document.getElementById('exportJsonOpts');
+      if (jsonOpts) jsonOpts.classList.toggle('hidden', currentExportFmt !== 'json');
       const dlBtn = document.getElementById('btnExportConfirm');
       if (currentExportFmt === 'png') dlBtn.innerHTML = '⬡ DOWNLOAD';
       else if (currentExportFmt === 'svg') dlBtn.innerHTML = '⬡ DOWNLOAD SVG';
-      else if (currentExportFmt === 'gif') dlBtn.innerHTML = '⟐ RENDER';
       else dlBtn.innerHTML = '⬡ EXPORT JSON';
     });
   });
@@ -453,7 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnExportConfirm').addEventListener('click', () => {
     if (currentExportFmt === 'png') exportHiRes(selectedExportRes);
     else if (currentExportFmt === 'svg') exportSVG(selectedSvgRes);
-    else if (currentExportFmt === 'gif') exportGifFromModal();
     else exportJSON();
   });
 
@@ -462,7 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
     prog.classList.remove('hidden'); fill.style.width='10%'; txt.textContent=`Rendering ${size}×${size}...`;
     requestAnimationFrame(()=>{
       const ec=document.createElement('canvas'); ec.width=size; ec.height=size;
-      engine._noBg = true;
+      const pngTransparent = document.getElementById('pngTransparent');
+      engine._noBg = pngTransparent && pngTransparent.checked;
       engine.renderToCanvas(ec, currentSeed);
       engine._noBg = false;
       fill.style.width='60%';
@@ -795,8 +794,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ═══ COLLAPSIBLE SECTIONS ═══
+  document.querySelectorAll('.section-title[data-toggle]').forEach(title => {
+    title.addEventListener('click', () => {
+      const section = title.closest('.panel-section');
+      section.classList.toggle('collapsed');
+      const arrow = title.querySelector('.toggle-arrow');
+      if (arrow) arrow.textContent = section.classList.contains('collapsed') ? '▸' : '▾';
+    });
+  });
+
+  // ═══ RENDER VIDEO FROM PANEL ═══
+  const btnRecordExport = document.getElementById('btnRecordExport');
+  if (btnRecordExport) {
+    document.getElementById('recSpeed').addEventListener('input', function(){ updateVal('recSpeed'); });
+    btnRecordExport.addEventListener('click', () => {
+      const fmt = document.getElementById('recFormat').value;
+      const size = parseInt(document.getElementById('recSize').value);
+      const dur = parseInt(document.getElementById('recDuration').value);
+      const fps = parseInt(document.getElementById('recFps').value);
+      const spd = parseInt(document.getElementById('recSpeed').value);
+      if (fmt === 'webm') exportWebM(size, dur, fps, spd);
+      else exportGIF(size, dur, fps, spd);
+    });
+  }
+
   // ═══ INIT ═══
   generate();
-  console.log('%c☸ META MANDALA initialized\n◈ dharma protocols active\n✦ seed: '+Math.floor(currentSeed),
-    'color:#9b59b6;font-family:monospace');
+  console.log('%c☸ META MANDALA', 'color:#9b59b6;font-family:monospace');
 });

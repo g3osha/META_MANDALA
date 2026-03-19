@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 
-const LAYER_COUNT = 8;
+const LAYER_COUNT = 10;
 const LAYER_SIZE = 1024;
 const PLANE_SIZE = 4.5;
-const DEPTH_RANGE = 3.5;
-const CAM_Z = 5.5;
-const PARALLAX = 1.8;
-const SMOOTH = 0.06;
+const DEPTH_RANGE = 7;
+const CAM_Z = 5;
+const PARALLAX = 2.2;
+const SMOOTH = 0.05;
 
 let renderer, scene, camera;
 let layerMeshes = [];
@@ -27,6 +27,7 @@ function init() {
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0a0f);
+  scene.fog = new THREE.FogExp2(0x0a0a0f, 0.06);
 
   camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
   camera.position.set(0, 0, CAM_Z);
@@ -179,12 +180,13 @@ function buildScene(layers, palette) {
       map: tex, transparent: true, side: THREE.DoubleSide,
       depthWrite: false
     });
-    const geo = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE);
+    const layerScale = 1 - ((LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1)) * 0.3;
+    const geo = new THREE.PlaneGeometry(PLANE_SIZE * layerScale, PLANE_SIZE * layerScale);
     const mesh = new THREE.Mesh(geo, mat);
     const depth = -((LAYER_COUNT - 1 - i) / (LAYER_COUNT - 1)) * DEPTH_RANGE;
     mesh.position.z = depth;
     mesh.userData.baseZ = depth;
-    mesh.userData.breathPhase = i * 0.8;
+    mesh.userData.breathPhase = i * 0.6;
     layerMeshes.push(mesh);
     scene.add(mesh);
   });
@@ -215,9 +217,11 @@ function animate() {
   camera.position.z = CAM_Z;
   camera.lookAt(cx, cy, -DEPTH_RANGE * 0.5);
 
-  layerMeshes.forEach(m => {
+  layerMeshes.forEach((m, idx) => {
     if (m.userData.breathPhase) {
-      m.position.z = m.userData.baseZ + Math.sin(time * 0.4 + m.userData.breathPhase) * 0.04;
+      const breath = Math.sin(time * 0.3 + m.userData.breathPhase) * 0.08;
+      const pull = Math.sin(time * 0.15) * 0.15 * (idx / layerMeshes.length);
+      m.position.z = m.userData.baseZ + breath - pull;
     }
   });
 
