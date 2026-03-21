@@ -230,15 +230,23 @@ class VideoExporter {
     this.canvas = canvas;
     this.fps = options.fps || 15;
     this.duration = options.duration || 3;
+    this.format = options.format || 'mp4';
   }
 
-  static getSupportedMime() {
-    const candidates = [
-      'video/webm;codecs=vp9',
-      'video/webm;codecs=vp8',
-      'video/webm',
+  static getSupportedMime(format = 'mp4') {
+    const mp4Candidates = [
+      'video/mp4;codecs=h264',
+      'video/mp4;codecs=avc1.42E01E',
       'video/mp4'
     ];
+    const webmCandidates = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm'
+    ];
+    const candidates = format === 'webm'
+      ? [...webmCandidates, ...mp4Candidates]
+      : [...mp4Candidates, ...webmCandidates];
     for (const m of candidates) {
       if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(m)) return m;
     }
@@ -248,8 +256,8 @@ class VideoExporter {
   async exportWebM(renderFrame, onProgress) {
     const stream = this.canvas.captureStream(0);
     const track = stream.getVideoTracks()[0];
-    const mime = VideoExporter.getSupportedMime();
-    const opts = { videoBitsPerSecond: 5000000 };
+    const mime = VideoExporter.getSupportedMime(this.format);
+    const opts = { videoBitsPerSecond: 12000000 };
     if (mime) opts.mimeType = mime;
 
     let recorder;
@@ -264,7 +272,6 @@ class VideoExporter {
     };
 
     const totalFrames = this.fps * this.duration;
-    const frameDelay = 1000 / this.fps;
 
     return new Promise((resolve, reject) => {
       recorder.onerror = e => reject(e.error || new Error('Recording failed'));
@@ -280,14 +287,14 @@ class VideoExporter {
 
       const captureFrame = () => {
         if (frame >= totalFrames) {
-          setTimeout(() => recorder.stop(), 100);
+          requestAnimationFrame(() => recorder.stop());
           return;
         }
         renderFrame(frame, totalFrames);
         if (track.requestFrame) track.requestFrame();
         frame++;
         if (onProgress) onProgress(frame / totalFrames);
-        setTimeout(captureFrame, frameDelay);
+        requestAnimationFrame(captureFrame);
       };
       captureFrame();
     });

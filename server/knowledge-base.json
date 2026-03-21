@@ -1,0 +1,246 @@
+{
+  "version": "2026-02-24",
+  "traditions": {
+    "vajrayana": {
+      "title": "diamond vehicle",
+      "status": "canonical",
+      "statusLabel": "canonical mandala lineage",
+      "tooltip": "Vajrayana uses mandalas as ritual and contemplative maps of awakened space; this preset stays stylized, but its core frame is historically grounded.",
+      "summary": "Tantric Buddhist mandala as an initiatory palace of awakened mind, used in visualization, consecration, and deity practice.",
+      "hidden": "Union of method and wisdom, where force is clarified into compassion and lucid awareness.",
+      "caution": "This generator is inspired by the tradition, not a strict iconographic reconstruction of a specific tantric mandala.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Vajrayana",
+      "sources": [
+        {
+          "title": "Vajrayana",
+          "url": "https://en.wikipedia.org/wiki/Vajrayana"
+        },
+        {
+          "title": "Mandala",
+          "url": "https://en.wikipedia.org/wiki/Mandala"
+        }
+      ]
+    },
+    "theravada": {
+      "title": "elder path",
+      "status": "interpretive",
+      "statusLabel": "interpretive contemplative mode",
+      "tooltip": "Theravada is centered on ethics, meditation, and insight rather than a canonical mandala system, so this preset is intentionally minimalist and interpretive.",
+      "summary": "Ascetic contemplative geometry reduced toward discipline, breath, and clear seeing rather than a historically fixed Theravada mandala canon.",
+      "hidden": "Renunciation, ethical balance, and insight into impermanence through restraint.",
+      "caution": "Theravada is not typically framed through mandala liturgy in the Vajrayana or Shingon sense; this is a design interpretation.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Theravada",
+      "sources": [
+        {
+          "title": "Theravada",
+          "url": "https://en.wikipedia.org/wiki/Theravada"
+        },
+        {
+          "title": "Mandala overview",
+          "url": "https://en.wikipedia.org/wiki/Mandala"
+        }
+      ]
+    },
+    "zen": {
+      "title": "empty mirror",
+      "status": "interpretive",
+      "statusLabel": "enso-inspired Zen mode",
+      "tooltip": "Zen is represented here through ensō-like reduction: one gesture, one field, less symbolic density, more direct presence.",
+      "summary": "Minimal structure echoing ensō logic: one gesture, one field, and as little excess as possible.",
+      "hidden": "Directness, silence, and the fertile void behind appearances.",
+      "caution": "Zen does not operate through a single canonical mandala program; this preset leans on ensō aesthetics and meditative minimalism.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Ens%C5%8D",
+      "sources": [
+        {
+          "title": "Zen",
+          "url": "https://en.wikipedia.org/wiki/Zen"
+        },
+        {
+          "title": "Enso",
+          "url": "https://en.wikipedia.org/wiki/Ens%C5%8D"
+        }
+      ]
+    },
+    "tibetan": {
+      "title": "sand palace",
+      "status": "canonical",
+      "statusLabel": "ritual Tibetan mandala art",
+      "tooltip": "Tibetan sand mandalas build dense sacred palaces with layered gates and directional order, then dissolve them to teach impermanence.",
+      "summary": "Ritual cosmogram of the deity realm, dense with gates, layers, and consecrated space.",
+      "hidden": "Impermanence inside splendor: complexity is assembled with care, then released back into emptiness.",
+      "caution": "This preset borrows the layered logic of Tibetan mandala art, but does not reproduce a named liturgical mandala exactly.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Mandala",
+      "sources": [
+        {
+          "title": "Mandala",
+          "url": "https://en.wikipedia.org/wiki/Mandala"
+        }
+      ]
+    },
+    "shingon": {
+      "title": "true word matrix",
+      "status": "canonical",
+      "statusLabel": "esoteric Japanese mandala lineage",
+      "tooltip": "Shingon centers the Two Realms mandalas, where Mahavairocana, mantra, compassion, and wisdom are ordered into a formal esoteric cosmos.",
+      "summary": "Esoteric Japanese field of mantra, lotus unfolding, and encoded correspondences, especially through the Womb and Diamond Realms.",
+      "hidden": "Sound becoming form: sacred speech crystallized into ordered radiance.",
+      "caution": "The visual language is inspired by Shingon correspondences, but simplified for a generative tool.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Mandala_of_the_Two_Realms",
+      "sources": [
+        {
+          "title": "Shingon Buddhism",
+          "url": "https://en.wikipedia.org/wiki/Shingon_Buddhism"
+        },
+        {
+          "title": "Mandala of the Two Realms",
+          "url": "https://en.wikipedia.org/wiki/Mandala_of_the_Two_Realms"
+        }
+      ]
+    },
+    "fractal": {
+      "title": "recursive gnosis",
+      "status": "modern",
+      "statusLabel": "modern sacred-math mode",
+      "tooltip": "Fractal mode is a contemporary contemplative abstraction: self-similarity, recursion, and scale mirroring rather than a historical ritual tradition.",
+      "summary": "Self-similar triangle growth where each scale mirrors the whole.",
+      "hidden": "As above, so below: the pattern of mind repeats through every layer.",
+      "caution": "This is a modern symbolic mode, not a historical sacred tradition.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Fractal",
+      "sources": [
+        {
+          "title": "Fractal",
+          "url": "https://en.wikipedia.org/wiki/Fractal"
+        }
+      ]
+    },
+    "slavic": {
+      "title": "solar wheel",
+      "status": "reconstructive",
+      "statusLabel": "modern reconstructive motif set",
+      "tooltip": "Slavic mode draws from solar, seasonal, and protective motifs associated with modern Rodnovery; claims of one stable ancient kolovrat meaning are debated, so this preset is marked reconstructive.",
+      "summary": "Solar-wheel geometry tied to season, hearth, and protection, framed through modern reconstructions of Slavic sacred motifs.",
+      "hidden": "Cycle, ancestry, and life-force moving through remembered and re-imagined sacred order.",
+      "caution": "Kolovrat symbolism is widely used in modern Slavic Native Faith, but a uniform ancient pan-Slavic reading is not securely documented.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Slavic_Native_Faith",
+      "sources": [
+        {
+          "title": "Slavic Native Faith",
+          "url": "https://en.wikipedia.org/wiki/Slavic_Native_Faith"
+        }
+      ]
+    },
+    "runic": {
+      "title": "futhark seal",
+      "status": "interpretive",
+      "statusLabel": "interpretive runic sigil mode",
+      "tooltip": "Runic mode is based on Elder Futhark letterforms and later esoteric readings; runes are historical inscriptions first, while their use here as radial protective geometry is a modern interpretation.",
+      "summary": "Rune-like angular structure focused on inscription, omen, and carved protection, derived from Elder Futhark forms.",
+      "hidden": "Fate read as pattern: the mark becomes a compact for memory, boundary, and will.",
+      "caution": "Elder Futhark is a historical writing system, not a historical mandala tradition; this preset deliberately adapts runic forms into symbolic geometry.",
+      "referenceUrl": "https://en.wikipedia.org/wiki/Elder_Futhark",
+      "sources": [
+        {
+          "title": "Elder Futhark",
+          "url": "https://en.wikipedia.org/wiki/Elder_Futhark"
+        }
+      ]
+    },
+    "custom": {
+      "title": "open sigil field",
+      "status": "synthetic",
+      "statusLabel": "free synthesis mode",
+      "tooltip": "Custom mode drops historical constraints and lets you combine palettes, glyphs, and sacred geometry into a personal symbolic field.",
+      "summary": "Free synthesis mode where symbols from multiple streams are fused into one artifact.",
+      "hidden": "Personal myth-making: meaning is assembled rather than inherited.",
+      "caution": "This mode is intentionally ahistorical and combinatory.",
+      "referenceUrl": "",
+      "sources": []
+    }
+  },
+  "symbols": {
+    "palettes": {
+      "samsara": {
+        "meaning": "purple-gold current of transmutation, royalty, and awakened abundance"
+      },
+      "fire": {
+        "meaning": "ritual heat, purification, and active deity force"
+      },
+      "ice": {
+        "meaning": "clarity, stillness, and the cool mirror of emptiness"
+      },
+      "slavic": {
+        "meaning": "solar blood-memory, harvest gold, linen white, and hearth protection"
+      },
+      "rune": {
+        "meaning": "moon-metal memory, carved omen, and ancestral warding"
+      }
+    },
+    "objects": {
+      "none": {
+        "meaning": "no external icon, so the field speaks through pure geometry"
+      },
+      "buddha": {
+        "meaning": "embodied awakening anchors the center"
+      },
+      "eye": {
+        "meaning": "the witness principle opens inner sight"
+      },
+      "dharmachakra": {
+        "meaning": "the wheel marks teaching and lawful motion"
+      },
+      "deer": {
+        "meaning": "gentleness and listening soften the field"
+      },
+      "elephant": {
+        "meaning": "steady power and memory root the design"
+      },
+      "stupa": {
+        "meaning": "relic-mind and sacred ascent stabilize the axis"
+      },
+      "vajra": {
+        "meaning": "indestructible insight charges the structure"
+      },
+      "tree": {
+        "meaning": "vertical growth links worlds through one trunk"
+      },
+      "moon": {
+        "meaning": "reflection and rhythm tune the image to cycles"
+      },
+      "om": {
+        "meaning": "primordial vibration seals the center"
+      },
+      "algiz": {
+        "meaning": "protection rises like uplifted antlers",
+        "caution": "Protective meanings are common in modern esoteric rune reading; historical rune use was broader and context-dependent."
+      },
+      "othala": {
+        "meaning": "inheritance and homeland are enclosed and guarded",
+        "caution": "Later esoteric readings often emphasize heritage and estate; early rune evidence is less doctrinal than modern occult summaries imply."
+      },
+      "kolovrat": {
+        "meaning": "the sun-wheel sets the field into living rotation",
+        "caution": "Used widely in modern Rodnovery, but its exact ancient uniform meaning is debated."
+      },
+      "runicStar": {
+        "meaning": "directional force radiates as a warding compass"
+      },
+      "worldTree": {
+        "meaning": "ancestral axis ties underworld, earth, and sky"
+      }
+    },
+    "encodings": {
+      "spiral": {
+        "meaning": "meaning coils inward and outward as initiation"
+      },
+      "radial": {
+        "meaning": "meaning radiates from the center into the world"
+      },
+      "hidden": {
+        "meaning": "meaning remains veiled, active below visibility"
+      },
+      "glitch": {
+        "meaning": "meaning is fractured so deeper strata leak through the signal"
+      }
+    }
+  }
+}
