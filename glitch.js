@@ -36,6 +36,12 @@ class GlitchEngine {
            cc.brightness !== 100 || cc.contrast !== 100 || cc.invert !== 0;
   }
 
+  hasColorCorrection() {
+    const cc = this.colorCorrection;
+    return cc.hueRotate !== 0 || cc.saturation !== 100 || cc.brightness !== 100 ||
+           cc.contrast !== 100 || cc.invert !== 0;
+  }
+
   apply() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
@@ -72,6 +78,39 @@ class GlitchEngine {
     }
   }
 
+  applyEffectsToCanvas(targetCtx, sourceCanvas, w, h) {
+    const orig = { width: this.width, height: this.height, canvas: this.canvas, ctx: this.ctx };
+    try {
+      this.width = w; this.height = h;
+      this.canvas = targetCtx.canvas; this.ctx = targetCtx;
+      targetCtx.clearRect(0, 0, w, h);
+      targetCtx.drawImage(sourceCanvas, 0, 0, w, h);
+
+      const p = this.params;
+      if (p.pixelate > 1) this._applyPixelate(targetCtx, p.pixelate);
+      if (p.rgbShift > 0) this._applyRGBShift(targetCtx, p.rgbShift);
+      if (p.distortion > 0) this._applyDistortion(targetCtx, p.distortion);
+      if (p.noise > 0) this._applyNoise(targetCtx, p.noise);
+      if (p.scanlines > 0) this._applyScanlines(targetCtx, p.scanlines);
+      if (p.flicker > 0) this._applyFlicker(targetCtx, p.flicker);
+    } finally {
+      this.width = orig.width; this.height = orig.height;
+      this.canvas = orig.canvas; this.ctx = orig.ctx;
+    }
+  }
+
+  applyColorCorrectionToCanvas(targetCtx, w, h) {
+    const orig = { width: this.width, height: this.height, canvas: this.canvas, ctx: this.ctx };
+    try {
+      this.width = w; this.height = h;
+      this.canvas = targetCtx.canvas; this.ctx = targetCtx;
+      this._applyColorCorrection(targetCtx);
+    } finally {
+      this.width = orig.width; this.height = orig.height;
+      this.canvas = orig.canvas; this.ctx = orig.ctx;
+    }
+  }
+
   _applyColorCorrection(ctx) {
     const cc = this.colorCorrection;
     const hasCC = cc.hueRotate!==0||cc.saturation!==100||cc.brightness!==100||cc.contrast!==100||cc.invert!==0;
@@ -89,24 +128,28 @@ class GlitchEngine {
       let g = d[i + 1] / 255;
       let b = d[i + 2] / 255;
 
+      let [h, s, l] = this._rgbToHsl(r, g, b);
+      h = (h + hueShift + 1) % 1;
+      s = Math.max(0, Math.min(1, s * satMul));
+      [r, g, b] = this._hslToRgb(h, s, l);
+
+      r *= brightMul;
+      g *= brightMul;
+      b *= brightMul;
+
+      r = (r - 0.5) * contrastMul + 0.5;
+      g = (g - 0.5) * contrastMul + 0.5;
+      b = (b - 0.5) * contrastMul + 0.5;
+
       if (invertAmt > 0) {
         r = r * (1 - invertAmt) + (1 - r) * invertAmt;
         g = g * (1 - invertAmt) + (1 - g) * invertAmt;
         b = b * (1 - invertAmt) + (1 - b) * invertAmt;
       }
 
-      let [h, s, l] = this._rgbToHsl(r, g, b);
-      h = (h + hueShift + 1) % 1;
-      s = Math.max(0, Math.min(1, s * satMul));
-      [r, g, b] = this._hslToRgb(h, s, l);
-
-      r = (r - 0.5) * contrastMul + 0.5;
-      g = (g - 0.5) * contrastMul + 0.5;
-      b = (b - 0.5) * contrastMul + 0.5;
-
-      r = Math.max(0, Math.min(1, r * brightMul));
-      g = Math.max(0, Math.min(1, g * brightMul));
-      b = Math.max(0, Math.min(1, b * brightMul));
+      r = Math.max(0, Math.min(1, r));
+      g = Math.max(0, Math.min(1, g));
+      b = Math.max(0, Math.min(1, b));
 
       d[i] = Math.round(r * 255);
       d[i + 1] = Math.round(g * 255);

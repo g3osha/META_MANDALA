@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let asciiMode = false;
   let selectedExportRes = 2048;
   let selectedSvgRes = 2048;
+  let selectedJpgRes = 2048;
   let currentExportFmt = 'png';
   const ASCII_COLS = 120;
 
@@ -605,6 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAnimate = document.getElementById('btnAnimate');
   const btnRandom = document.getElementById('btnRandom');
   const btnRandomStream = document.getElementById('btnRandomStream');
+  const randomSingleTradition = document.getElementById('randomSingleTradition');
   const animSpeedSlider = document.getElementById('animSpeed');
   let randomStreamInterval = null;
   let currentAnimMode = 'kaleidoscope';
@@ -834,7 +836,10 @@ document.addEventListener('DOMContentLoaded', () => {
     currentSeed = rand()*99999;
 
     const trads = Object.keys(TRADITIONS).filter(k=>k!=='custom');
-    const randomTrad = trads[Math.floor(rand()*trads.length)];
+    const preserveTradition = randomSingleTradition && randomSingleTradition.checked && engine.params.tradition !== 'custom';
+    const randomTrad = preserveTradition
+      ? engine.params.tradition
+      : trads[Math.floor(rand()*trads.length)];
     engine.setTradition(randomTrad);
 
     const variation = rand();
@@ -896,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setRandomButtonState(isRunning) {
     btnRandomStream.classList.toggle('active', isRunning);
-    btnRandomStream.innerHTML = isRunning ? '❚❚ PAUSE AUTO' : '▶ AUTO RANDOM';
+    btnRandomStream.innerHTML = isRunning ? '❚❚' : '▶';
   }
 
   function startRandomStream() {
@@ -1063,19 +1068,22 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       currentExportFmt = btn.dataset.fmt;
       document.getElementById('exportPngOpts').classList.toggle('hidden', currentExportFmt !== 'png');
+      const jpgOpts = document.getElementById('exportJpgOpts');
+      if (jpgOpts) jpgOpts.classList.toggle('hidden', currentExportFmt !== 'jpg');
       document.getElementById('exportSvgOpts').classList.toggle('hidden', currentExportFmt !== 'svg');
       const jsonOpts = document.getElementById('exportJsonOpts');
       if (jsonOpts) jsonOpts.classList.toggle('hidden', currentExportFmt !== 'json');
       const dlBtn = document.getElementById('btnExportConfirm');
       if (currentExportFmt === 'png') dlBtn.innerHTML = '⬡ DOWNLOAD';
+      else if (currentExportFmt === 'jpg') dlBtn.innerHTML = '⬡ DOWNLOAD JPG';
       else if (currentExportFmt === 'svg') dlBtn.innerHTML = '⬡ DOWNLOAD SVG';
       else dlBtn.innerHTML = '⬡ EXPORT JSON';
     });
   });
 
-  document.querySelectorAll('.export-res-btn:not(.svg-res-btn)').forEach(btn=>{
+  document.querySelectorAll('#exportPngOpts .export-res-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.export-res-btn:not(.svg-res-btn)').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('#exportPngOpts .export-res-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active'); selectedExportRes=parseInt(btn.dataset.w);
     });
   });
@@ -1085,29 +1093,41 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active'); selectedSvgRes=parseInt(btn.dataset.w);
     });
   });
+  document.querySelectorAll('.jpg-res-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.jpg-res-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active'); selectedJpgRes=parseInt(btn.dataset.w);
+    });
+  });
 
 
   document.getElementById('btnExportConfirm').addEventListener('click', () => {
     if (currentExportFmt === 'png') exportHiRes(selectedExportRes);
+    else if (currentExportFmt === 'jpg') exportHiRes(selectedJpgRes, 'jpg');
     else if (currentExportFmt === 'svg') exportSVG(selectedSvgRes);
     else exportJSON();
   });
 
-  function exportHiRes(size) {
+  function exportHiRes(size, format = 'png') {
     const prog=document.getElementById('exportProgress'), fill=document.getElementById('exportProgressFill'), txt=document.getElementById('exportProgressText');
     prog.classList.remove('hidden'); fill.style.width='10%'; txt.textContent=`Rendering ${size}×${size}...`;
     requestAnimationFrame(()=>{
       const ec=document.createElement('canvas'); ec.width=size; ec.height=size;
       const pngTransparent = document.getElementById('pngTransparent');
-      engine._noBg = pngTransparent && pngTransparent.checked;
+      engine._noBg = format === 'png' && pngTransparent && pngTransparent.checked;
       engine.renderToCanvas(ec, currentSeed);
       engine._noBg = false;
       fill.style.width='60%';
       const finalCanvas = buildFinalCompositeCanvas(ec, size);
       fill.style.width='90%'; txt.textContent='Encoding...';
       requestAnimationFrame(()=>{
-        const link=document.createElement('a'); link.download=`meta-mandala-${size}px-${Date.now()}.png`;
-        link.href=finalCanvas.toDataURL('image/png'); link.click();
+        const link=document.createElement('a');
+        const ext = format === 'jpg' ? 'jpg' : 'png';
+        link.download=`meta-mandala-${size}px-${Date.now()}.${ext}`;
+        link.href = format === 'jpg'
+          ? finalCanvas.toDataURL('image/jpeg', 0.95)
+          : finalCanvas.toDataURL('image/png');
+        link.click();
         fill.style.width='100%'; txt.textContent='Done!';
         setTimeout(()=>{ prog.classList.add('hidden'); document.getElementById('exportModal').classList.add('hidden'); }, 600);
       });
@@ -1167,8 +1187,18 @@ document.addEventListener('DOMContentLoaded', () => {
     out.width = size;
     out.height = size;
     const outCtx = out.getContext('2d');
-    if (glitch.hasActiveEffects()) glitch.applyToCanvas(outCtx, sourceCanvas, size, size);
-    else outCtx.drawImage(sourceCanvas, 0, 0, size, size);
+    outCtx.clearRect(0, 0, size, size);
+    outCtx.drawImage(sourceCanvas, 0, 0, size, size);
+    if (glitch.hasGlitchEffects()) {
+      const overlay = document.createElement('canvas');
+      overlay.width = size;
+      overlay.height = size;
+      glitch.applyEffectsToCanvas(overlay.getContext('2d'), sourceCanvas, size, size);
+      outCtx.drawImage(overlay, 0, 0, size, size);
+    }
+    if (glitch.hasColorCorrection()) {
+      glitch.applyColorCorrectionToCanvas(outCtx, size, size);
+    }
     return out;
   }
 

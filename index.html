@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>☸ META MANDALA</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☸</text></svg>">
-<link rel="stylesheet" href="style.css?v=0.4.5">
+<link rel="stylesheet" href="style.css?v=0.4.6">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
@@ -326,7 +326,8 @@
         </div>
         <div class="canvas-random-row">
           <button class="action-btn" id="btnRandom" title="[R]">◌ RANDOM</button>
-          <button class="action-btn" id="btnRandomStream">▶ AUTO RANDOM</button>
+          <button class="action-btn" id="btnRandomStream" title="Auto random">▶</button>
+          <label class="toggle-label random-lock-toggle"><input type="checkbox" id="randomSingleTradition"> <span>Lock Tradition</span></label>
         </div>
       </div>
 
@@ -411,6 +412,7 @@
     <h3 class="section-title" style="margin-bottom:16px">⬡ EXPORT</h3>
     <div class="export-format-tabs">
       <button class="export-fmt-btn active" data-fmt="png">PNG</button>
+      <button class="export-fmt-btn" data-fmt="jpg">JPG</button>
       <button class="export-fmt-btn" data-fmt="svg">SVG</button>
       <button class="export-fmt-btn" data-fmt="json">JSON</button>
     </div>
@@ -424,6 +426,15 @@
       <div class="toggle-row" style="margin:8px 0">
         <label class="toggle-label"><input type="checkbox" id="pngTransparent"> <span>Transparent background</span></label>
       </div>
+    </div>
+    <div id="exportJpgOpts" class="hidden">
+      <div class="export-options">
+        <button class="export-res-btn jpg-res-btn" data-w="800">800px</button>
+        <button class="export-res-btn jpg-res-btn" data-w="1024">1024px</button>
+        <button class="export-res-btn jpg-res-btn active" data-w="2048">2K</button>
+        <button class="export-res-btn jpg-res-btn" data-w="4096">4K</button>
+      </div>
+      <p style="font-size:9px;color:var(--text-dim);line-height:1.5;margin:8px 0">JPG exports use an opaque background and preserve the same post-processing stack as the live preview.</p>
     </div>
     <div id="exportSvgOpts" class="hidden">
       <div class="export-options">
@@ -446,11 +457,11 @@
   </div>
 </div>
 
-<script src="engine.js?v=0.4.5"></script>
-<script src="glitch.js?v=0.4.5"></script>
-<script src="gif.js?v=0.4.5"></script>
-<script src="c2s.js?v=0.4.5"></script>
-<script src="app.js?v=0.4.5"></script>
-<script type="module" src="vr-mode.js?v=0.4.5"></script>
+<script src="engine.js?v=0.4.6"></script>
+<script src="glitch.js?v=0.4.6"></script>
+<script src="gif.js?v=0.4.6"></script>
+<script src="c2s.js?v=0.4.6"></script>
+<script src="app.js?v=0.4.6"></script>
+<script type="module" src="vr-mode.js?v=0.4.6"></script>
 </body>
 </html>
